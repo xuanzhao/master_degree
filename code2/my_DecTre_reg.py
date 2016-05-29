@@ -107,7 +107,7 @@ def bagForFeatures(max_features, n_features):
 # Types and constants
 # ================================================
 
-RList = []
+# RList = []
 LEAFTYPE = {'sigmoidRegr': gradDescent, 'sigmoidSTOCRegr':stocGradDescent ,
              'ridgeRegr': ridgeRegr}
 ERRTYPE = {'sigmoidErr': sigmoidErr, 'lseErr': lseErr}
@@ -251,9 +251,9 @@ class treeNode(object):
         X = (dataMat[:,:-1])
         X_mean = np.mean(X, axis=0)
         X_radius = np.std(X, axis=0)
-        RInfo = np.c_[X_mean, X_radius]
+        RInfo = np.c_[X_mean, X_radius] 
         #RInfo = {'X_mean':X_mean, 'X_radius':X_radius} 
-        return RInfo
+        return RInfo   # (n, 2), col0=center, col1=radius
 
     def get_RList(self):
 
@@ -335,7 +335,7 @@ class treeNode(object):
                 return self.rightChild.treeForeCast(x_test, leafType) 
 
 
-class DecisionTreeClassifier(object):
+class DecisionTreeRegresion(object):
 
 
     """A decision tree classifier.
@@ -418,15 +418,16 @@ class DecisionTreeClassifier(object):
     """
 
     def __init__(self,
-                 errType='sigmoidErr',
-                 leafType='sigmoidSTOCRegr',
-                 max_depth=3,
-                 min_samples_split=5,
+                 errType='lseErr',
+                 leafType='ridgeRegr',
+                 max_depth=5,
+                 min_samples_split=10,
                  min_weight_fraction_leaf=0.0,
                  max_features=None,
                  random_state=None,
                  class_weight=None,
                  ):
+
     # user's input attributes
         self.errType = ERRTYPE.get(errType)
         self.leafType = LEAFTYPE.get(leafType)
@@ -575,8 +576,197 @@ class DecisionTreeClassifier(object):
 
 
 
+# ============================RandomFrestRegression===========================
+class RandomForestRegression(object):
+    """A random forest classifier.
+
+    A random forest is a meta estimator that fits a number of decision tree
+    classifiers on various sub-samples of the dataset and use averaging to 
+    improve the predictive accuracy and control over-fitting.
+    The sub-sample size is always the same as the original input sample size
+    but the samples are drawn with replacement if `bootstrap=True`(default).
+
+    Parameters
+    ----------
+    n_trees: integer, optional(default=10)
+        The number of trees in the forest.
+
+    errType: 
+
+    leaftype:
+
+    max_features:
+
+    max_depth:
+
+    min_samples_split:
+
+    min_weight_fraction_leaf:
+
+    random_state:
+
+    class_weight:
+
+    bootstrap : boolean, optional (default=True)
+        Whether bootstrap samples are used when building trees.
+
+    oob_score : bool
+        Whether to use out-of-bag samples to estimate the generalization error.
+
+    n_jobs : integer, optional (default=1)
+        The number of jobs to run in parallel for both `fit` and `predict`.
+        If -1, then the number of jobs is set to the number of cores.
 
 
+    Attributes
+    ----------
+    estimators : list of DecisionTreeClassifier
+        The collection of fitted sub-estimators.
+
+    n_features : int
+        The number of features when ``fit`` is performed.
+
+    n_outputs : int
+        The number of outputs when ``fit`` is performed.
+
+    classes : array of shape = [n_classes] or a list of such arrays.
+
+    oob_score : float
+        Score of the training dataset obtained using an out-of-bag estimate.
+    """
+
+    def __init__(self,
+                 n_trees=10,
+                 errType='lseErr',
+                 leafType='ridgeRegr',
+                 max_depth=3,
+                 min_samples_split=5,
+                 min_weight_fraction_leaf=0.0,
+                 max_features=None,
+                 random_state=None,
+                 class_weight=None,
+                 bootstrap=True,
+                 oob_score=False,
+                 n_jobs=1,
+                 ):
+
+    # user's input attributes
+        self.n_trees = n_trees
+        self.errType = errType
+        self.leafType = leafType
+        self.max_depth = max_depth
+        self.min_samples_split = min_samples_split
+        self.min_weight_fraction_leaf = min_weight_fraction_leaf
+        self.max_features = max_features
+        self.random_state = random_state
+        self.class_weight = class_weight
+
+    # decisionTree privite attributes, which is determinated by input data
+        # self.n_features = None
+        # self.n_outputs  = None
+        # self.classes    = None
+
+        self.trees = []
+        for n in range(n_trees):
+            self.trees.append(DecisionTreeRegresion(
+                            errType = ERRTYPE.get(errType), # here not pass para, ERRTYPE not defined
+                            leafType = LEAFTYPE.get(leafType),
+                            max_depth = max_depth,
+                            min_samples_split = min_samples_split,
+                            min_weight_fraction_leaf = min_weight_fraction_leaf,
+                            max_features = max_features,
+                            random_state = random_state,
+                            class_weight = class_weight)
+                            )
+
+ 
+    def fit(self, X_train, y_train):
+        for tree in self.trees:
+            tree.fit(X_train, y_train)
+        
+        return self
+
+    def predict(self,X_test):
+        predictions = []
+        for tree in self.trees:
+            y_pred = tree.predict(X_test)
+            predictions.append(y_pred)
+        
+        avg_pred = np.mean(predictions, axis=1)
+        return avg_pred
+
+
+def RF_fit(X_train, y_train, n_trees=10, 
+            max_depth=5, min_samples_split=10, max_features=None):
+
+    from sklearn.utils import resample
+    trees = []
+    for n in range(n_trees):
+        trees.append(DecisionTreeRegresion(
+                     errType='lseErr',
+                     leafType='ridgeRegr',
+                     max_depth=max_depth,
+                     min_samples_split=min_samples_split,
+                     min_weight_fraction_leaf=0.0,
+                     max_features=max_features,
+                     random_state=None,
+                     class_weight=None)
+                    )
+
+    for tree in trees:
+        X_boot_train, y_boot_train = resample(X_train, y_train)
+        tree.fit(X_boot_train, y_boot_train)
+
+    return trees  # type is list
+
+def RF_predict(X_test,trees):
+    predictions = []
+    for tree in trees:
+        y_pred = tree.predict(X_test)
+        predictions.append(y_pred)
+
+    predictions = np.array(predictions)  # (n,m,1)
+    avg_pred = np.mean(predictions, axis=0)
+    sigmoid_pred = np.where(avg_pred>0.5, 1, 0)
+    return sigmoid_pred
+
+
+def get_RF_avgRList(trees):
+    
+    from sklearn.cluster import AgglomerativeClustering
+    from sklearn.neighbors import kneighbors_graph
+
+    # get_RF_RList
+    RF_RList=[]
+    for tree in trees:
+        RF_RList.extend(tree.tree.get_RList())   # len = m
+
+    RF_R_Mat = np.array(RF_RList)  #(m,n,2), col0=center, col1=radius
+    RF_R_centers = RF_R_Mat[:,:,0]  # (m,n)
+    RF_R_radius = RF_R_Mat[:,:,1]   # (m,n)
+
+    # get the number of cluster
+    avg_num_R = int( RF_R_Mat.shape[0] /len(trees))  # total R divided by number trees
+    # get the connectivity graph of R_list
+    connect_graph = kneighbors_graph(RF_R_centers, n_neighbors=len(trees)-1, include_self=False)
+    # connect_graph shape = (m,m) , if neibor then value=1, else=0
+
+    # compute clustering
+    R_cluster = AgglomerativeClustering(n_clusters=avg_num_R, connectivity=connect_graph,
+                                    linkage='ward').fit(RF_R_centers)
+
+    #get_RF_avgRList(R_cluster):
+    R_cluster_label = R_cluster.labels_
+    RF_avgRList = []
+
+    for label in np.unique(R_cluster_label):
+        R_mean  = np.mean(RF_R_centers[R_cluster_label == label], axis=0)
+        R_radius = np.mean(RF_R_radius[R_cluster_label == label], axis=0)
+
+        R = np.c_[R_mean, R_radius] # shape (n,2)
+        RF_avgRList.append(R)
+
+    return RF_avgRList
 
 
 

@@ -8,7 +8,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.cross_validation import train_test_split
 from sklearn import svm
 from __future__ import division
-import my_DecTre_clf
+# import my_DecTre_clf
 import my_DecTre_reg
 import get_Quasi_linear_Kernel
 # ========================= generate data ============================
@@ -56,7 +56,9 @@ contours = plt.contourf(xx,yy,Z, cmap=plt.cm.Paired)
 myTree = my_DecTre_clf.DecisionTreeClassifier(max_depth=5)
 myTree.fit(X_train, y_train)
 
-myTree = my_DecTre_reg.DecisionTreeRegresion(max_depth=5)
+myTree = my_DecTre_reg.DecisionTreeRegresion(leafType='LogicReg', 
+											 errType='lseErr_regul',
+											 max_depth=3)
 myTree.fit(X_train, y_train)
 y_pred = myTree.predict(X_test)
 
@@ -64,15 +66,7 @@ print 'confusion_matrix :\n', metrics.confusion_matrix(y_test, y_pred)
 print 'accuracy_score :', metrics.accuracy_score(y_test, y_pred)
 print 'f1_score :', metrics.f1_score(y_test, y_pred)
 
-# ========================== training RF =====================================
-myFore = my_DecTre_reg.RF_fit(X_train, y_train, n_trees=10, max_depth=5)
-y_pred = my_DecTre_reg.RF_predict(X_test, myFore)
-
-print 'confusion_matrix :\n', metrics.confusion_matrix(y_test, y_pred)
-print 'accuracy_score :', metrics.accuracy_score(y_test, y_pred)
-print 'f1_score :', metrics.f1_score(y_test, y_pred)
-
-# =============== decision tree training quasi_linear SVM ==============
+# ========== decision tree training and testingquasi_linear SVM ==========
 RMat = np.array(myTree.tree.get_RList())
 from functools import partial
 RBFinfo = partial(get_Quasi_linear_Kernel.get_RBFinfo,RMat=RMat)
@@ -82,8 +76,25 @@ Quasi_linear_kernel = partial(get_Quasi_linear_Kernel.get_KernelMatrix,RMat=RMat
 clf = svm.SVC(kernel=Quasi_linear_kernel)
 clf.fit(X_train, y_train)
 
+# scatter(X_test[:,0],X_test[:,1], c=y_test)
+y_pred = clf.predict(X_test)
+print 'confusion_matrix :\n', metrics.confusion_matrix(y_test, y_pred)
+print 'accuracy_score :', metrics.accuracy_score(y_test, y_pred)
+print 'f1_score :', metrics.f1_score(y_test, y_pred)
 
-# ======================= RF training quasi_linear SVM ==============
+
+# ========================== training RF =====================================
+myFore = my_DecTre_reg.RF_fit(X_train, y_train, n_trees=10, 
+							  leafType='LogicReg', errType='lseErr_regul',
+							  max_depth=5)
+y_pred = my_DecTre_reg.RF_predict(X_test, myFore)
+
+print 'confusion_matrix :\n', metrics.confusion_matrix(y_test, y_pred)
+print 'accuracy_score :', metrics.accuracy_score(y_test, y_pred)
+print 'f1_score :', metrics.f1_score(y_test, y_pred)
+
+
+# =============== RF training and testing quasi_linear SVM ==============
 RMat = np.array(my_DecTre_reg.get_RF_avgRList(myFore))
 from functools import partial
 RBFinfo = partial(get_Quasi_linear_Kernel.get_RBFinfo,RMat=RMat)
@@ -93,15 +104,11 @@ Quasi_linear_kernel = partial(get_Quasi_linear_Kernel.get_KernelMatrix,RMat=RMat
 clf = svm.SVC(kernel=Quasi_linear_kernel)
 clf.fit(X_train, y_train)
 
-
-# ========================== testing model ===========================
-
 # scatter(X_test[:,0],X_test[:,1], c=y_test)
 y_pred = clf.predict(X_test)
 print 'confusion_matrix :\n', metrics.confusion_matrix(y_test, y_pred)
 print 'accuracy_score :', metrics.accuracy_score(y_test, y_pred)
 print 'f1_score :', metrics.f1_score(y_test, y_pred)
-
 
 # ================= training and testing RBF SVM ========================
 
