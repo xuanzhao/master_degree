@@ -3,58 +3,45 @@ import numpy as np
 import matplotlib.pylab as plt
 
 from sklearn import linear_model
+from sklearn.kernel_ridge import KernelRidge
 from sklearn.isotonic import IsotonicRegression
 from sklearn import metrics
 # ===============================================
 # common function
 # ===============================================
 
+SGDClf = linear_model.SGDClassifier(loss='modified_huber',penalty='l1')
 
+LogicReg = linear_model.LogisticRegression(penalty='l2', C=5.0)
 
-LogicReg = linear_model.LogisticRegression()
+RidgeReg = linear_model.Ridge(alpha=1.0)
 
-RidgeReg = linear_model.Ridge()
+KernelRidge = KernelRidge(alpha=1.0, kernel="linear", gamma=None)
 
 RANSACReg = linear_model.RANSACRegressor(linear_model.LinearRegression())
 
-BayesReg = linear_model.BayesianRidge()
+BayesReg = linear_model.BayesianRidge(n_iter=300,alpha_1=1.e-6,alpha_2=1.e-6,
+                                      lambda_1=1.e-6, lambda_2=1.e-6)
 
-IsotonicReg = IsotonicRegression()
+IsotonicReg = IsotonicRegression(y_min=None, y_max=None, increasing=True,
+                                 out_of_bounds='nan')
 
-def sigmoidErr(X, y):
-    if len(np.unique(y)) != 1:
-        model = LogicReg
-        model.fit(X, y)
-        try:
-            model.__getattribute__('predict_proba')
-            yHat = model.predict_proba(X)
-        except AttributeError, e:
-            print e
-        else:
-            model.__getattribute__('predict')
-            yHat = model.predict(X)
-
-        error = np.sum(np.power(y[:,np.newaxis] - yHat, 2))
-        #yHat = model.predict_log_proba(X)
-        #error = metrics.log_loss(y, yHat)
-        return error
-    else:
-        return 0.0
 
 def lseErr(X, y, leafType):
 
     if len(np.unique(y)) != 1:
-        model = LogicReg
+        model = leafType
         model.fit(X, y)
         try:
             model.__getattribute__('predict_proba')
+            print 'current leaf model could predict_probability, which is \n',model
             yHat = model.predict_proba(X)
         except AttributeError, e:
-            print e
-        else:
+            print 'AttributeError, ', e
             model.__getattribute__('predict')
+            print 'now use predict method, leaf model is \n',model
             yHat = model.predict(X)
-        
+            
         error = np.sum(np.power(y[:,np.newaxis] - yHat, 2)) / len(yHat)
 
         #yHat = model.predict_log_proba(X)
@@ -63,17 +50,18 @@ def lseErr(X, y, leafType):
     else:
         return 0.0
 
-def lseErr_regul(X, y, leafType, k=.5):
+def lseErr_regul(X, y, leafType, k=.05):
     if len(np.unique(y)) != 1:
-        model = LogicReg
+        model = leafType
         model.fit(X, y)
         try:
             model.__getattribute__('predict_proba')
+            print 'current leaf model could predict_probability, which is \n',model
             yHat = model.predict_proba(X)
         except AttributeError, e:
-            print e
-        else:
+            print 'AttributeError, ', e
             model.__getattribute__('predict')
+            print 'now use predict method, leaf model is \n',model
             yHat = model.predict(X)
         
         X_mean = np.mean(X, axis=0)
@@ -130,9 +118,9 @@ def bagForFeatures(max_features, n_features):
 # ================================================
 
 # RList = []
-LEAFTYPE = {'LogicReg': LogicReg,  'RidgeReg': RidgeReg, 
+LEAFTYPE = {'SGDClf': SGDClf, 'LogicReg': LogicReg, 'RidgeReg': RidgeReg, 
             'RANSACReg': RANSACReg, 'BayesReg': BayesReg,
-            'IsotonicReg': IsotonicReg
+            'IsotonicReg': IsotonicReg, 'KernelRidge':KernelRidge
             }
 ERRTYPE = {'lseErr': lseErr, 'lseErr_regul': lseErr_regul}
 
@@ -447,10 +435,10 @@ class DecisionTreeRegresion(object):
                  random_state=None,
                  class_weight=None,
                  ):
-    # LEAFTYPE = {'LogicReg': LogicReg,  'RidgeReg': RidgeReg, 
-    #             'RANSACReg': RANSACReg, 'BayesReg': BayesReg,}
-    #             'IsotonicReg': IsotonicReg
-    #             }
+    # LEAFTYPE = {'SGDClf': SGDClf, 'LogicReg': LogicReg, 'RidgeReg': RidgeReg, 
+                 # 'RANSACReg': RANSACReg, 'BayesReg': BayesReg,
+                 # 'IsotonicReg': IsotonicReg, 'KernelRidge':KernelRidge
+                 # }
     # ERRTYPE = {'lseErr': lseErr, 'lseErr_regul': lseErr_regul}
 
     # user's input attributes
@@ -746,13 +734,13 @@ def RF_fit(X_train, y_train, n_trees=10,
     return trees  # type is list
 
 def RF_predict(X_test,trees):
-    predictions = []
+    predictions = []  # len=m
     for tree in trees:
-        y_pred = tree.predict(X_test)
-        predictions.append(y_pred)
+        y_pred = tree.predict(X_test)  #(m,1)
+        predictions.append(y_pred)      
 
-    predictions = np.array(predictions)  # (n,m,1)
-    avg_pred = np.mean(predictions, axis=0)
+    predictions = np.array(predictions)  # (n,m,1) , n is number of trees
+    avg_pred = np.mean(predictions, axis=0) #(m,1)
     sigmoid_pred = np.where(avg_pred>0.5, 1, 0)
     return sigmoid_pred
 

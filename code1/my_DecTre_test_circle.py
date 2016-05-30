@@ -36,14 +36,13 @@ y_max = X[:, 1].max()
 
 
 # ========================= training model ===========================
-myTree = my_DecTre.DecisionTreeClassifier(max_depth=5, min_samples_split=10)
+myTree = my_DecTre.DecisionTreeClassifier(max_depth=5, min_samples_split=30)
 myTree.fit(X_train, y_train)
 
 # ========================== testing model ===========================
 
 scatter(X_test[:,0],X_test[:,1], c=y_test)
 pred = myTree.predict(X_test)
-pred = myTree.predict(X_train)
 print 'confusion_matrix :\n', metrics.confusion_matrix(y_test, pred)
 print 'accuracy_score :', metrics.accuracy_score(y_test, pred)
 
