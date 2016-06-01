@@ -283,8 +283,11 @@ RF_param_dist = {"max_depth": [3, 4, 5, 6, 7, 8, 9, None],
 RBF_SVM_param_dist= {'kernel': ['rbf'], 'gamma': [1e-1,1e-2,1e-3,1e-4,1e-5],
                      'C': [0.01, 0.1, 1, 10, 100, 200, 400, 500, 1000]}
 
+# Linear_SVM_param_dist = {'kernel': ['linear'], 
+# 						 'C': [0.01, 0.1, 1, 10, 100, 200, 400, 500, 1000]}
 Linear_SVM_param_dist = {'kernel': ['linear'], 
-						 'C': [0.01, 0.1, 1, 10, 100, 200, 400, 500, 1000]}
+						 'C': sp.stats.expon(scale=1000)}
+
 
 QL_SVM_param_dist= {'kernel': ['precomputed'],
 					'gamma': sp.stats.expon(scale=.1),
@@ -332,7 +335,7 @@ print()
 
 clf = svm.SVC(kernel='rbf')
 # run randomized search
-n_iter_search = 40
+n_iter_search = 500
 random_search = RandomizedSearchCV(clf, param_distributions=RBF_SVM_param_dist,
                                    n_iter=n_iter_search)
 start = time()
@@ -347,6 +350,36 @@ y_test, y_pred = y_test, random_search.predict(X_test)
 print(classification_report(y_test, y_pred))
 print()
 
+
+#=================== plot_forest_feature importance ====================
+
+from sklearn.ensemble import ExtraTreesClassifier
+
+
+# Build a forest and compute the feature importances
+forest = ExtraTreesClassifier(n_estimators=250,
+                              random_state=0)
+
+forest.fit(X, Y)
+importances = forest.feature_importances_
+std = np.std([tree.feature_importances_ for tree in forest.estimators_],
+             axis=0)
+indices = np.argsort(importances)[::-1]
+
+# Print the feature ranking
+print("Feature ranking:")
+
+for f in range(X.shape[1]):
+    print("%d. feature %d (%f)" % (f + 1, indices[f], importances[indices[f]]))
+
+# Plot the feature importances of the forest
+plt.figure()
+plt.title("Feature importances")
+plt.bar(range(X.shape[1]), importances[indices],
+       color="r", yerr=std[indices], align="center")
+plt.xticks(range(X.shape[1]), indices)
+plt.xlim([-1, X.shape[1]])
+plt.show()
 
 
 

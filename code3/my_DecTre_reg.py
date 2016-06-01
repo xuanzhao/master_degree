@@ -34,12 +34,12 @@ def lseErr(X, y, leafType):
         model.fit(X, y)
         try:
             model.__getattribute__('predict_proba')
-            print 'current leaf model could predict_probability, which is \n',model
+            #print 'current leaf model could predict_probability, which is \n',model
             yHat = model.predict_proba(X)
         except AttributeError, e:
-            print 'AttributeError, ', e
+            #print 'AttributeError, ', e
             model.__getattribute__('predict')
-            print 'now use predict method, leaf model is \n',model
+            #print 'now use predict method, leaf model is \n',model
             yHat = model.predict(X)
             
         error = np.sum(np.power(y[:,np.newaxis] - yHat, 2)) / len(yHat)
@@ -56,12 +56,12 @@ def lseErr_regul(X, y, leafType, k=.05):
         model.fit(X, y)
         try:
             model.__getattribute__('predict_proba')
-            print 'current leaf model could predict_probability, which is \n',model
+            # print 'current leaf model could predict_probability, which is \n',model
             yHat = model.predict_proba(X)
         except AttributeError, e:
-            print 'AttributeError, ', e
+            # print 'AttributeError, ', e
             model.__getattribute__('predict')
-            print 'now use predict method, leaf model is \n',model
+            # print 'now use predict method, leaf model is \n',model
             yHat = model.predict(X)
         
         X_mean = np.mean(X, axis=0)
@@ -158,14 +158,14 @@ class treeNode(object):
         # all data is same class
         yHat = dataMat[:,-1]
         if len(np.unique(yHat)) == 1:
-            print 'before return leafType, let me check the value\n'
+            #print 'before return leafType, let me check the value\n'
             print 'here all data is same class :',yHat
             print 'the leafType return value :',leafType.fit(self.parent.dataMat[:,:-1],self.parent.dataMat[:,-1])
             return None, leafType.fit(self.parent.dataMat[:,:-1],self.parent.dataMat[:,-1])
         # fit the max_depth
         if max_depth != None:
             if self.selfDepth > max_depth:
-                print 'before return leafType, let me check the value\n'
+                #print 'before return leafType, let me check the value\n'
                 print 'here fit the max_depth:', self.selfDepth
                 print 'the leafType return value :',leafType.fit(dataMat[:,:-1],dataMat[:,-1])
                 return None, leafType.fit(dataMat[:,:-1],dataMat[:,-1])
@@ -186,16 +186,16 @@ class treeNode(object):
                     bestIndex = featIndex
                     bestValue = splitVal
                     bestError = newError
-                print '-----------------iteration-----------------------\n'
-                print 'featIndex : ',featIndex, 'FeatValue :', splitVal
-                print 'newError  : ',newError, 'bestError : ', bestError
-                print '-------------------------------------------------\n'
+                #print '-----------------iteration-----------------------\n'
+                #print 'featIndex : ',featIndex, 'FeatValue :', splitVal
+                #print 'newError  : ',newError, 'bestError : ', bestError
+                #print '-------------------------------------------------\n'
 
         # fit the min_samples_split
         leftMat, rightMat = self.binSplitData(dataMat, bestIndex, bestValue)
         if (leftMat.shape[0] < min_samples_split) or \
             (rightMat.shape[0] < min_samples_split):
-            print 'before return leafType, let me check the value\n'
+           #print 'before return leafType, let me check the value\n'
             print 'here fit the min_samples_split :',self.n_samples
             print 'the leafType return value :',leafType.fit(dataMat[:,:-1],dataMat[:,-1])
             return None, leafType.fit(dataMat[:,:-1],dataMat[:,-1])
@@ -226,27 +226,27 @@ class treeNode(object):
         else:
             self.splitIndex = featId
             self.splitValue = featVal
-            print '-------------------- get BestSplit --------------\n'
-            print 'self.splitIndex :', self.splitIndex, 'self.splitValue : ', self.splitValue
-            print '-------------------------------------------------\n'
+            #print '-------------------- get BestSplit --------------\n'
+            #print 'self.splitIndex :', self.splitIndex, 'self.splitValue : ', self.splitValue
+            #print '-------------------------------------------------\n'
             leftMat, rightMat = self.binSplitData(dataMat, featId, featVal)
-            print '------------- after one split ----------------------\n'
-            print 'leftMat shape  :', leftMat.shape, 'mat samples :\n', leftMat[:3,:]
-            print 'rightMat shape :', rightMat.shape, 'mat samples :\n',rightMat[:3,:]
-            print '---------------------------------------------------\n'
+            #print '------------- after one split ----------------------\n'
+            #print 'leftMat shape  :', leftMat.shape, 'mat samples :\n', leftMat[:3,:]
+            #print 'rightMat shape :', rightMat.shape, 'mat samples :\n',rightMat[:3,:]
+            #print '---------------------------------------------------\n'
 
            
             self.leftChild = treeNode(self)
             self.rightChild = treeNode(self)
-            print "\n***********this node's information:***************\n"
-            print "self.parent     :", self.parent
-            print "self.leftChild  :", self.leftChild
-            print 'self.rightChild :', self.rightChild
-            print 'self.splitIndex :', self.splitIndex
-            print 'self.splitValue :', self.splitValue
-            print 'self.n_samples  :', self.n_samples
-            print 'self.n_features :', self.n_features
-            print "\n**************************************************\n"
+            #print "\n***********this node's information:***************\n"
+            #print "self.parent     :", self.parent
+            #print "self.leftChild  :", self.leftChild
+            #print 'self.rightChild :', self.rightChild
+            #print 'self.splitIndex :', self.splitIndex
+            #print 'self.splitValue :', self.splitValue
+            #print 'self.n_samples  :', self.n_samples
+            #print 'self.n_features :', self.n_features
+            #print "\n**************************************************\n"
             self.leftChild.createTree(leftMat, leafType, errType, 
                             max_depth, min_samples_split, min_weight_fraction_leaf, 
                             random_state, class_weight, max_features)
