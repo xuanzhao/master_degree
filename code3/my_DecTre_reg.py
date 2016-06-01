@@ -749,7 +749,7 @@ def RF_predict(X_test,trees):
     return sigmoid_pred
 
 
-def get_RF_avgRList(trees):
+def get_RF_avgRList_byAggloCluster(trees):
     
     from sklearn.cluster import AgglomerativeClustering
     from sklearn.neighbors import kneighbors_graph
@@ -766,10 +766,9 @@ def get_RF_avgRList(trees):
     # get the number of cluster
     avg_num_R = int( RF_R_Mat.shape[0] /len(trees))  # total R divided by number trees
     # get the connectivity graph of R_list
-    connect_graph = kneighbors_graph(RF_R_centers, n_neighbors=len(trees)-1, include_self=False)
+    connect_graph = kneighbors_graph(RF_R_centers, n_neighbors=int(np.sqrt(len(trees)-1)), include_self=False)
     # connect_graph shape = (m,m) , if neibor then value=1, else=0
-
-    # compute clustering
+    
     R_cluster = AgglomerativeClustering(n_clusters=avg_num_R, connectivity=connect_graph,
                                     linkage='ward').fit(RF_R_centers)
 
@@ -787,7 +786,43 @@ def get_RF_avgRList(trees):
     return RF_avgRList
 
 
+def get_RF_avgRList_byDBSCAN(trees):
+    
+    from sklearn.cluster import DBSCAN
+    from sklearn.neighbors import radius_neighbors_graph
 
+    # get_RF_RList
+    RF_RList=[]
+    for tree in trees:
+        RF_RList.extend(tree.tree.get_RList())   # len = m
+
+    RF_R_Mat = np.array(RF_RList)  #(m,n,2), col0=center, col1=radius
+    RF_R_centers = RF_R_Mat[:,:,0]  # (m,n)
+    RF_R_radius = RF_R_Mat[:,:,1]   # (m,n)
+
+    # get the number of cluster
+    avg_num_R = int( RF_R_Mat.shape[0] /len(trees))  # total R divided by number trees
+    # get the connectivity graph of R_list
+    #connect_distance = radius_neighbors_graph(RF_R_centers, radius=1.0, 
+    #                        model='distance',include_self=False)
+    # connect_distance shape = (m,m),the edges are Euclidean distance between points.
+    # compute clustering
+    #R_cluster = DBSCAN(eps=0.5, min_samples=int(np.sqrt(avg_num_R)), 
+    #                    metrics='precomputed').fit(connect_distance)
+    R_cluster = DBSCAN(eps=0.5, min_samples=int(np.sqrt(avg_num_R)), 
+                        metrics='euclidean').fit(RF_R_centers)
+    #get_RF_avgRList(R_cluster):
+    R_cluster_label = R_cluster.labels_
+    RF_avgRList = []
+
+    for label in np.unique(R_cluster_label):
+        R_mean  = np.mean(RF_R_centers[R_cluster_label == label], axis=0)
+        R_radius = np.mean(RF_R_radius[R_cluster_label == label], axis=0)
+
+        R = np.c_[R_mean, R_radius] # shape (n,2)
+        RF_avgRList.append(R)
+
+    return RF_avgRList
 
 
 

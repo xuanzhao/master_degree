@@ -6,7 +6,10 @@ from sklearn.datasets import make_classification
 from sklearn.datasets import make_blobs
 from sklearn.datasets import make_gaussian_quantiles
 from sklearn.tree import DecisionTreeClassifier
+
+from sklearn import cross_validation
 from sklearn.cross_validation import train_test_split
+
 from sklearn import svm
 from __future__ import division
 # import my_DecTre_clf
@@ -14,7 +17,6 @@ import my_DecTre_reg
 import get_Quasi_linear_Kernel
 from sklearn.learning_curve import learning_curve
 from sklearn.learning_curve import validation_curve
-from sklearn import cross_validation
 
 from time import time
 from operator import itemgetter
@@ -60,19 +62,23 @@ X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.33)
 
 
 # ========================== training RF =====================================
+start = time()
 myFore = my_DecTre_reg.RF_fit(X, Y, n_trees=10, 
 							  leafType='LogicReg', errType='lseErr_regul',
 							  max_depth=5, min_samples_split=3,
 							  max_features=.2)
+end = time() - start
 # y_pred = my_DecTre_reg.RF_predict(X, myFore)
 
 # print 'confusion_matrix :\n', metrics.confusion_matrix(y_test, y_pred)
 # print 'accuracy_score :', metrics.accuracy_score(y_test, y_pred)
 # print 'f1_score :', metrics.f1_score(y_test, y_pred)
-
+cv = cross_validation.ShuffleSplit(X.shape[0], n_iter=5, test_size=0.3,random_state=0)
+scores = cross_validation.cross_val_score(myFore,X,Y,cv=5)
+print 'accuracy_score: %0.2f (+/-) %.2f' % (scores.mean(), scores.std()*2)
 
 # =============== RF training and testing quasi_linear SVM ==============
-RMat = np.array(my_DecTre_reg.get_RF_avgRList(myFore))
+RMat = np.array(my_DecTre_reg.get_RF_avgRList_byAggoloCluster(myFore))
 RBFinfo = partial(get_Quasi_linear_Kernel.get_RBFinfo,RMat=RMat)
 Quasi_linear_kernel = partial(get_Quasi_linear_Kernel.get_KernelMatrix,RMat=RMat)
 
