@@ -50,7 +50,8 @@ def lseErr(X, y, leafType):
     else:
         return 0.0
 
-def lseErr_regul(X, y, leafType, k=.05):
+
+def lseErr_regul(X, y, leafType, k=.1):
     if len(np.unique(y)) != 1:
         model = leafType
         model.fit(X, y)
@@ -64,8 +65,11 @@ def lseErr_regul(X, y, leafType, k=.05):
             # print 'now use predict method, leaf model is \n',model
             yHat = model.predict(X)
         
-        X_mean = np.mean(X, axis=0)
-        X_delta = X - X_mean # (m,n)
+        X1_mean = np.mean(X[y==1], axis=0)
+        X0_mean = np.mean(X[y==0], axis=0)
+        X1_delta = X[y==1] - X0_mean # (m,n)
+        X0_delta = X[y==0] - X1_mean
+        X_delta = np.r_[X1_delta, X0_delta]
         error = (np.sum(np.power(y[:,np.newaxis] - yHat, 2))  + \
                 k * np.sum(np.power(X_delta, 2)) ) / len(yHat)
 

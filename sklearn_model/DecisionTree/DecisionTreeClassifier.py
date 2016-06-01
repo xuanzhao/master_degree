@@ -20,6 +20,10 @@ iris.target = iris.target[perm]
 # Split into training and testing sets
 skf = cross_validation.StratifiedKFold(iris.target,  n_folds=3)
 
+cross_validation.cross_val_score(clf, X, Y, cv=skf, scoring='f1_weighted')
+cross_validation.cross_val_score(clf, X, Y, cv=skf, scoring='accuracy')
+cross_validation.cross_val_score(clf, X, Y, cv=skf, scoring='recall')
+
 for train_index, test_index in skf:
 	X_train, X_test = iris.data[train_index], iris.data[test_index]
 	y_train, y_test = iris.target[train_index], iris.target[test_index]
@@ -27,6 +31,8 @@ for train_index, test_index in skf:
 	print 'y_train shape is', y_train.shape
 	print 'X_test shape is', X_test.shape
 	print 'y_test shape is', y_test.shape
+
+
 
 #X_train, X_test, y_train, y_test = train_test_split[iris.data, iris.target, test_size=0.33, random_state=42]
 
