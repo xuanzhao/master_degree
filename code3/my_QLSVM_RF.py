@@ -737,8 +737,12 @@ def RF_fit(X_train, y_train, n_trees=10,
                      random_state=None,
                      class_weight=None)
                     )
-
+    m,n = X_train.shape
     for tree in trees:
+
+        # get random features
+        feat_ind = np.random.choice(n, int(0.7*n), replace=False)
+        # get data samples
         X_boot_train, y_boot_train = resample(X_train, y_train)
         tree.fit(X_boot_train, y_boot_train)
 
@@ -771,29 +775,53 @@ def get_RF_weights(X_test, y_test, trees):
     return RF_weights  # type is np.array, (m_tree) 
 
 
-def get_QLSVM_RF(trees, RF_weights, lamb=10):
+def get_QLSVM_RF(trees, X_train, y_train, lamb=10):
 
     import get_Quasi_linear_Kernel
     from functools import partial
     from sklearn.svm import SVC
+    import scipy as sp
+
+    RBFinfo_list = []
     QLSVM_List = []
-    
+    QL_SVM_param_dist= {'kernel': ['precomputed'],
+                    'C': sp.stats.expon(scale=1000)}
+
     for tree in trees:
-        # get tree's RList()
-        RList = tree.tree.get_RList()
-        RMat = np.array(RList) # (m,n,2)
+        # get tree's RMat
+        RMat = np.array(tree.tree.get_RList()) # (m,n,2)
+        # get QL kernel matrix
         RBFinfo = partial(get_Quasi_linear_Kernel.get_RBFinfo,RMat=RMat,lamb=lamb)
         Quasi_linear_kernel = partial(get_Quasi_linear_Kernel.get_KernelMatrix,RMat=RMat)
-        QLSVM_List.append(SVC(kernel=Quasi_linear_kernel).fit(X_train, y_train))
+        K_train = Quasi_linear_kernel(X_train,X_train)
+        #K_test = Quasi_linear_kernel(X_test,X_train)
+        clf = SVC(kernel='precomputed')
+        # run randomized search get best QL SVM
+        n_iter_search = 50
+        random_search = RandomizedSearchCV(clf, param_distributions=QL_SVM_param_dist,
+                                       n_iter=n_iter_search)
+        random_search.fit(K_train, y_train)
+        print("Random_search Best estimator is :\n"), random_search.best_estimator_
+        QLSVM_List.append(random_search.best_estimator_)
 
     return QLSVM_List
 
-def QLSVM_predict(X_test, QLSVM_List, RF_weights):
+def QLSVM_predict(X_test, X_train, trees, QLSVM_List, RF_weights,lamb=2):
+
+    import get_Quasi_linear_Kernel
+    from functools import partial
+    from sklearn.svm import SVC
 
     y_pred = np.zeros((len(X_test),len(QLSVM_List)))
 
-    for n in range(len(QLSVM_List)):
-        y_pred[:,n] = QLSVM_List[n].predict(X_test) * RF_weights[n]
+    for i,tree in enumerate(trees):
+
+        RMat = np.array(tree.tree.get_RList()) # (m,n,2)
+        RBFinfo = partial(get_Quasi_linear_Kernel.get_RBFinfo,RMat=RMat,lamb=lamb)
+        Quasi_linear_kernel = partial(get_Quasi_linear_Kernel.get_KernelMatrix,RMat=RMat)
+
+        K_test = Quasi_linear_kernel(X_test,X_train)
+        y_pred[:,i] = QLSVM_List[i].predict(K_test) * RF_weights[i]
 
     final_y_pred_prob = np.sum(y_pred, axis=1)  
     final_y_pred = np.where(final_y_pred_prob>0.5, 1, 0)
