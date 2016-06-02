@@ -69,23 +69,14 @@
 		Mean validation score: 0.673 (std: 0.016)
 		Parameters: {'kernel': 'precomputed', 'C': 0.7786592702850007}
 
-
-		Model with rank: 1
+		Model with rank: 3
 		Mean validation score: 0.673 (std: 0.016)
 		Parameters: {'kernel': 'precomputed', 'C': 0.897103331569212}
 
-		Model with rank: 2
+		Model with rank: 4
 		Mean validation score: 0.673 (std: 0.016)
 		Parameters: {'kernel': 'precomputed', 'C': 0.8453133979530195}
 
-		Model with rank: 3
+		Model with rank: 5
 		Mean validation score: 0.668 (std: 0.010)
 		Parameters: {'kernel': 'precomputed', 'C': 1.6948934249826213}
-
-		Model with rank: 4
-		Mean validation score: 0.668 (std: 0.033)
-		Parameters: {'kernel': 'precomputed', 'C': 0.5005128230418076}
-
-		Model with rank: 5
-		Mean validation score: 0.663 (std: 0.004)
-		Parameters: {'kernel': 'precomputed', 'C': 1.7239539103925585}
