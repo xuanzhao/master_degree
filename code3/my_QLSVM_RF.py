@@ -13,7 +13,7 @@ from sklearn.neighbors import NearestNeighbors
 
 SGDClf = linear_model.SGDClassifier(loss='modified_huber',penalty='l1')
 
-LogicReg = linear_model.LogisticRegression(penalty='l2', C=5.0)
+LogicReg = linear_model.LogisticRegression(penalty='l2', C=1.0)
 
 RidgeReg = linear_model.Ridge(alpha=1.0)
 
@@ -745,8 +745,15 @@ class RandomForestRegression(object):
 
 
 def RF_fit(X_train, y_train, n_trees=10,
-            errType='lseErr_regul',leafType='logicReg',
+            errType='lseErr_regul',leafType='LogicReg',
             max_depth=5, min_samples_split=10, max_features=None):
+    
+
+    # LEAFTYPE = {'SGDClf': SGDClf, 'LogicReg': LogicReg, 'RidgeReg': RidgeReg, 
+                 # 'RANSACReg': RANSACReg, 'BayesReg': BayesReg,
+                 # 'IsotonicReg': IsotonicReg, 'KernelRidge':KernelRidge
+                 # }
+    # ERRTYPE = {'lseErr': lseErr, 'lseErr_regul': lseErr_regul}
 
     from sklearn.utils import resample
     trees = []
@@ -779,81 +786,57 @@ def RF_predict(X_test,trees):
     sigmoid_pred = np.where(avg_pred>0.5, 1, 0)
     return sigmoid_pred
 
+def get_RF_weights(X_test, y_test, trees):
 
-def get_RF_avgRList_byAggloCluster(trees):
-    
-    from sklearn.cluster import AgglomerativeClustering
-    from sklearn.neighbors import kneighbors_graph
-
-    # get_RF_RList
-    RF_RList=[]
+    f1_scores = []
     for tree in trees:
-        RF_RList.extend(tree.tree.get_RList())   # len = m
+        y_pred = tree.predict(X_test) # (m,1)
+        f1_scores.append(metrics.f1_score(y_test, y_pred))
 
-    RF_R_Mat = np.array(RF_RList)  #(m,n,2), col0=center, col1=radius
-    RF_R_centers = RF_R_Mat[:,:,0]  # (m,n)
-    RF_R_radius = RF_R_Mat[:,:,1]   # (m,n)
+    f1_scores = np.array(f1_scores)
+    sum_f1_score = np.sum(f1_scores)
+    weights = np.true_divide(f1_scores, sum_f1_score)
+    RF_weights = np.nan_to_num(weights)
 
-    # get the number of cluster
-    avg_num_R = int( RF_R_Mat.shape[0] /len(trees))  # total R divided by number trees
-    # get the connectivity graph of R_list
-    connect_graph = kneighbors_graph(RF_R_centers, n_neighbors=int(np.sqrt(len(trees)-1)), include_self=False)
-    # connect_graph shape = (m,m) , if neibor then value=1, else=0
+    return RF_weights  # type is np.array, (m_tree) 
+
+
+def get_QLSVM_RF(trees, RF_weights, lamb=10):
+
+    import get_Quasi_linear_Kernel
+    from functools import partial
+    from sklearn.svm import SVC
+    QLSVM_List = []
     
-    R_cluster = AgglomerativeClustering(n_clusters=avg_num_R, connectivity=connect_graph,
-                                    linkage='ward').fit(RF_R_centers)
-
-    #get_RF_avgRList(R_cluster):
-    R_cluster_label = R_cluster.labels_
-    RF_avgRList = []
-
-    for label in np.unique(R_cluster_label):
-        R_mean  = np.mean(RF_R_centers[R_cluster_label == label], axis=0)
-        R_radius = np.mean(RF_R_radius[R_cluster_label == label], axis=0)
-
-        R = np.c_[R_mean, R_radius] # shape (n,2)
-        RF_avgRList.append(R)
-
-    return RF_avgRList
-
-
-def get_RF_avgRList_byDBSCAN(trees):
-    
-    from sklearn.cluster import DBSCAN
-    from sklearn.neighbors import radius_neighbors_graph
-
-    # get_RF_RList
-    RF_RList=[]
     for tree in trees:
-        RF_RList.extend(tree.tree.get_RList())   # len = m
+        # get tree's RList()
+        RList = tree.tree.get_RList()
+        RMat = np.array(RList) # (m,n,2)
+        RBFinfo = partial(get_Quasi_linear_Kernel.get_RBFinfo,RMat=RMat,lamb=lamb)
+        Quasi_linear_kernel = partial(get_Quasi_linear_Kernel.get_KernelMatrix,RMat=RMat)
+        QLSVM_List.append(SVC(kernel=Quasi_linear_kernel).fit(X_train, y_train))
 
-    RF_R_Mat = np.array(RF_RList)  #(m,n,2), col0=center, col1=radius
-    RF_R_centers = RF_R_Mat[:,:,0]  # (m,n)
-    RF_R_radius = RF_R_Mat[:,:,1]   # (m,n)
+    return QLSVM_List
 
-    # get the number of cluster
-    avg_num_R = int( RF_R_Mat.shape[0] /len(trees))  # total R divided by number trees
-    # get the connectivity graph of R_list
-    #connect_distance = radius_neighbors_graph(RF_R_centers, radius=1.0, 
-    #                        model='distance',include_self=False)
-    # connect_distance shape = (m,m),the edges are Euclidean distance between points.
-    # compute clustering
-    #R_cluster = DBSCAN(eps=0.5, min_samples=int(np.sqrt(avg_num_R)), 
-    #                    metrics='precomputed').fit(connect_distance)
-    R_cluster = DBSCAN(eps=0.5, min_samples=int(np.sqrt(avg_num_R)), 
-                        metrics='euclidean').fit(RF_R_centers)
-    #get_RF_avgRList(R_cluster):
-    R_cluster_label = R_cluster.labels_
-    RF_avgRList = []
+def QLSVM_predict(X_test, QLSVM_List, RF_weights):
 
-    for label in np.unique(R_cluster_label):
-        R_mean  = np.mean(RF_R_centers[R_cluster_label == label], axis=0)
-        R_radius = np.mean(RF_R_radius[R_cluster_label == label], axis=0)
+    y_pred = np.zeros((len(X_test),len(QLSVM_List)))
 
-        R = np.c_[R_mean, R_radius] # shape (n,2)
-        RF_avgRList.append(R)
+    for n in range(len(QLSVM_List)):
+        y_pred[:,n] = QLSVM_List[n].predict(X_test) * RF_weights[n]
 
-    return RF_avgRList
+    final_y_pred_prob = np.sum(y_pred, axis=1)  
+    final_y_pred = np.where(final_y_pred_prob>0.5, 1, 0)
+
+    return final_y_pred
+
+
+
+
+
+
+
+
 
 
 
