@@ -6,6 +6,7 @@ from sklearn import linear_model
 from sklearn.kernel_ridge import KernelRidge
 from sklearn.isotonic import IsotonicRegression
 from sklearn import metrics
+from sklearn.neighbors import NearestNeighbors
 # ===============================================
 # common function
 # ===============================================
@@ -90,6 +91,33 @@ def lseErr_regul(X, y, leafType, k=.1):
 #             get_R(tree.rightChild)
 #     get_R(tree)
 #     return RList
+
+def get_boundary(X, y):
+
+    neigh = NearestNeighbors(n_neighbors=8, radius=1.0, n_jobs=4)
+    neigh.fit(X)
+
+    boundary_points = []
+    nonBoundary_points = []
+
+    X = np.array(X); y = np.array(y)
+    m,n = X.shape
+
+    for i in np.arange(m):
+        x = X[i,:].reshape(1,-1)
+        neigh_ind = neigh.kneighbors(x, 8, return_distance=False)
+        x = np.c_[x, y[i].reshape(-1,1)]
+        if len(np.unique(y[neigh_ind])) > 1: # x is boundary point
+            boundary_points.append(x)
+        else: # x is not boundary point
+            nonBoundary_points.append(x)
+
+    data_bound = np.array(boundary_points).reshape(len(boundary_points),n+1)
+    data_nonBound = np.array(nonBoundary_points).reshape(len(nonBoundary_points),n+1)
+
+    return data_bound, data_nonBound
+
+
 
 def bagForFeatures(max_features, n_features):
     """

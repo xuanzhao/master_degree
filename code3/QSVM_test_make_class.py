@@ -57,6 +57,19 @@ X_std  = np.std(X,axis=0)
 X = (X - X_mean) / X_std
 X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.33)
 
+
+# ========================= separate boundary data ========================
+X_bound,X_nonB = get_boundary(X,Y)
+Y_b = X_bound[:,-1]
+X_b = X_bound[:,:-1]
+Y_nb = X_nonB[:,-1]
+X_nb = X_nonB[:,:-1]
+
+plt.figure(1)
+plt.scatter(X_b[:, 0], X_b[:, 1], marker='o', c=Y_b)
+plt.figure(2)
+plt.scatter(X_nb[:, 0], X_nb[:, 1], marker='o', c=Y_nb)
+
 #========================== plot data face ================================
 plot_step = 0.01
 x_min = X[:, 0].min() 
