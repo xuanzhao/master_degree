@@ -357,25 +357,6 @@ class treeNode(object):
             if self.isTree(self.rightChild):
                 return self.rightChild.treeForeCast(x_test, leafType)
 
-    def treeDecisionBoundary(self, x_test, leafType):
-
-
-        if self.splitIndex==None:
-            if leafType.__name__ == 'gradDescent' or 'stocGradDescent':
-                weights = np.mat(self.splitValue)
-                sigmoidResult = sigmoid(x_test * weights)
-                #print '---------sigmoidResult :', 
-                if (sigmoidResult>0.49 and sigmoidResult<.51):
-                    return 0.5
-            else:
-                print 'get decisonBoundary value fault'
-
-        if x_test[:,self.splitIndex] < self.splitValue :
-            if self.isTree(self.leftChild):
-                return self.leftChild.treeForeCast(x_test, leafType)
-        else:
-            if self.isTree(self.rightChild):
-                return self.rightChild.treeForeCast(x_test, leafType) 
 
 
 class DecisionTreeRegresion(object):
@@ -574,18 +555,6 @@ class DecisionTreeRegresion(object):
 
         return yHat.A
 
-    def getDecisionBoundary(self, X):
-        self._validate_X_predict(X)
-        X = np.mat(X)
-        m,n = X.shape
-        yBoundary = np.mat(np.zeros((m,1)))
-        tree = self.tree
-        leafType = self.leafType
-
-        for i in range(m):
-            yBoundary[i,0] = tree.treeDecisionBoundary(X[i], leafType)
-
-        return yBoundary.A
 
     def _validate_X_predict(self, X):
         
@@ -785,6 +754,7 @@ def RF_predict(X_test,trees):
     avg_pred = np.mean(predictions, axis=0) #(m,1)
     sigmoid_pred = np.where(avg_pred>0.5, 1, 0)
     return sigmoid_pred
+    
 
 def get_RF_weights(X_test, y_test, trees):
 
