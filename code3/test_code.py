@@ -63,7 +63,26 @@ X = StandardScaler().fit_transform(X)
 X_mean = np.mean(X,axis=0)
 X_std  = np.std(X,axis=0)
 X = (X - X_mean) / X_std
+
+# ==========================QLSVM_RF training and testing ===============
 X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.33)
+
+
+myFore.get_QLSVM_RF(X_train, y_train)
+y_pred = myFore.QLSVM_predict(X_test,y_test)
+print '*'*70, 'current CV :', '*'*70,'\n'
+#print 'confusion_matrix :\n', metrics.confusion_matrix(y_test, y_pred)
+print 'y_test is \n', y_test
+print 'accuracy_score :', metrics.precision_score(y_test, y_pred)
+print 'recall_score :', metrics.recall_score(y_test, y_pred)
+print 'f1_score :', metrics.f1_score(y_test, y_pred)
+print '*'*150
+
+# from sklearn.metrics import precision_recall_fscore_support
+# y_true = np.array([1, 1, 1, 0, 0])
+# y_pred = np.array([1, 0, 0, 0, 1])
+# precision_recall_fscore_support(y_true, y_pred, average='binary')
+
 
 # ========================= separate boundary data ========================
 X_bound,X_nonB = my_DecTre_reg.get_boundary(X,Y)
@@ -110,7 +129,7 @@ end = time() - start
 skf = cross_validation.StratifiedKFold(Y, n_folds=5,
                                       shuffle=True,random_state=13)
 
-accuracy_score = []
+precision_score = []
 recall_score = []
 f1_score = []
 
@@ -119,15 +138,15 @@ for train_index, test_index in skf:
   y_train, y_test = Y[train_index], Y[test_index]
 
   myFore.get_QLSVM_RF(X_train, y_train)
-  y_pred = myFore.QLSVM_predict(X_test)
+  y_pred = myFore.QLSVM_predict(X_test,y_test)
   print '*'*70, 'current CV :', '*'*70,'\n'
   #print 'confusion_matrix :\n', metrics.confusion_matrix(y_test, y_pred)
   print 'y_test is \n', y_test
-  print 'accuracy_score :', metrics.accuracy_score(y_test, y_pred)
+  print 'precision_score :', metrics.precision_score(y_test, y_pred)
   print 'recall_score :', metrics.recall_score(y_test, y_pred)
   print 'f1_score :', metrics.f1_score(y_test, y_pred)
   print '*'*150
-  accuracy_score.append(metrics.accuracy_score(y_test, y_pred))
+  precision_score.append(metrics.precision_score(y_test, y_pred))
   recall_score.append(metrics.recall_score(y_test, y_pred))
   f1_score.append(metrics.f1_score(y_test, y_pred))
 

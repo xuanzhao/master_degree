@@ -16,7 +16,7 @@
 	QLSVM对C不敏感，且lambda值高的时候可以得到更为稀疏的核矩阵。
 
 
-5，实验结果：
+5，实验结果： CV=3
 	1）RBF精度在cv测试中，精度最低，说明过拟合的很厉害
 	RBFSVM： Model with rank: 1
 		Model with rank: 1

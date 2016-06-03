@@ -7,6 +7,7 @@ from sklearn.kernel_ridge import KernelRidge
 from sklearn.isotonic import IsotonicRegression
 from sklearn import metrics
 from sklearn.neighbors import NearestNeighbors
+from sklearn.metrics import precision_recall_fscore_support as score
 # ===============================================
 # common function
 # ===============================================
@@ -715,18 +716,24 @@ class QLSVM_clf_RF(object):
             X_oob = data_oob[:,:-1]; y_oob = data_oob[:,-1]
             K_oob = Quasi_linear_kernel(X_oob,X_train)     # for get SVM weight
             oob_pred = random_search.best_estimator_.predict(K_oob) # (m,1)
-            print '\nQLSVM number %d get f1_scores %f\n' % (i, metrics.f1_score(y_oob, oob_pred))
-            print '\nQLSVM number %d get accuracy_score %f\n' % (i, metrics.accuracy_score(y_oob, oob_pred))
-            print '\nQLSVM number %d get recall_score %f\n' % (i, metrics.recall_score(y_oob, oob_pred))
-            clf_weight = metrics.f1_score(y_oob, oob_pred)+0.01
-            f1_scores.append(clf_weight)
+
+            precision, recall, fscore, support = score(y_oob, oob_pred,average='binary')
+            print '\nQLSVM number %d get training score:\n' % i
+            print 'precision: {}'.format(precision)
+            print 'recall: {}'.format(recall)
+            print 'fscore: {}'.format(fscore)
+            #clf_weight = metrics.f1_score(y_oob, oob_pred)+0.01
+            #raw_input('for the check')
+            f1_scores.append(fscore**1.33)
 
 
+        # standarize f1_scores which is RF_weights
         f1_scores = np.array(f1_scores)
         sum_f1_score = np.sum(f1_scores)
         weights = np.true_divide(f1_scores, sum_f1_score)
         RF_weights = np.nan_to_num(weights)
         self.RF_weights = RF_weights
+        #self.RF_weights = np.ones(len(RF_weights)) / float(len(RF_weights))
         print '*'*100
         print 'done get trees_weights :', RF_weights # np.array,(m_tree) 
         print '*'*100
@@ -735,13 +742,13 @@ class QLSVM_clf_RF(object):
         self.QLSVM_lamb = lamb
         self.QLSVM_X_train = X_train
         print '*'*100
-        print 'done get QLSVM_List : ', QLSVM_List 
+        print 'done get QLSVM_List : '#, QLSVM_List 
         print '*'*100
 
         self.RF_R_clus_List = RF_R_clus_List
         print 'done get RF_R_clus_List'
 
-    def QLSVM_predict(self, X_test):
+    def QLSVM_predict(self, X_test, y_test):
         '''QLSVM_predict
         '''
         import get_Quasi_linear_Kernel
@@ -763,10 +770,16 @@ class QLSVM_clf_RF(object):
             Quasi_linear_kernel = partial(get_Quasi_linear_Kernel.get_KernelMatrix,RMat=RMat)
 
             K_test = Quasi_linear_kernel(X_test,X_train)
-            y_pred[:,i] = clf.predict(K_test) * RF_weights[i] 
-            print 'number %d QLSVM predict value is \n' %i
-            print y_pred[:,i] 
+            y_pred[:,i] = clf.predict(K_test)
+            #print y_pred[:,i] 
             #y_pred[:, i] = QLSVM_List[i].predict(K_test)
+            precision, recall, fscore, support = score(y_test, y_pred[:,i],average='binary')
+            print '\nQLSVM number %d get test score:\n' % i
+            print 'precision: {}'.format(precision)
+            print 'recall: {}'.format(recall)
+            print 'fscore: {}'.format(fscore)
+            #raw_input('for the check')
+            y_pred[:,i] = y_pred[:,i] * RF_weights[i] 
 
         final_y_pred_prob = np.sum(y_pred, axis=1) 
         print 'final_y_pred_prob is \n',final_y_pred_prob
@@ -787,11 +800,15 @@ class QLSVM_clf_RF(object):
         # get the connectivity graph of R_list
         #connect_graph = kneighbors_graph(RF_R_centers, n_neighbors=int(np.sqrt(len(trees)-1)), include_self=False)
         # connect_graph shape = (m,m) , if neibor then value=1, else=0
-        
-        R_cluster = AgglomerativeClustering(n_clusters=int(0.3*R_Mat.shape[0]),
-                                            connectivity=None,
-                                            linkage='ward').fit(R_centers)
-
+        #0.55*R_Mat.shape[0]
+        try:
+            R_cluster = AgglomerativeClustering(n_clusters=int(np.random.rand()*15+1),
+                                                connectivity=None,
+                                                linkage='ward').fit(R_centers)
+        except ValueError,e:
+            R_cluster = AgglomerativeClustering(n_clusters=int(0.5*R_Mat.shape[0]),
+                                                connectivity=None,
+                                                linkage='ward').fit(R_centers)
         #get_RF_avgRList(R_cluster):
         R_cluster_label = R_cluster.labels_
         R_cluster_List = []
