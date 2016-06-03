@@ -49,6 +49,11 @@ X = data['X']; Y = data['Y']
 # X = data['X']; Y = data['Y']
 data = fetch_mldata('sonar')
 X = data['data'] ; Y = data['target']
+Y  = np.where(Y==1, 1, 0)
+
+data = fetch_mldata('glass')
+X = data['data'] ; Y = data['target']
+Y  = np.where(Y==1, 1, 0)
 
 # ========================== standardize data ===========================
 from sklearn.preprocessing import StandardScaler
@@ -78,7 +83,7 @@ scores = cross_validation.cross_val_score(myFore,X,Y,cv=5)
 print 'accuracy_score: %0.2f (+/-) %.2f' % (scores.mean(), scores.std()*2)
 
 # =============== RF training and testing quasi_linear SVM ==============
-RMat = np.array(my_DecTre_reg.get_RF_avgRList_byAggoloCluster(myFore))
+RMat = np.array(my_DecTre_reg.get_RF_avgRList_byAggloCluster(myFore))
 RBFinfo = partial(get_Quasi_linear_Kernel.get_RBFinfo,RMat=RMat)
 Quasi_linear_kernel = partial(get_Quasi_linear_Kernel.get_KernelMatrix,RMat=RMat)
 

@@ -1,0 +1,81 @@
+#日期：2016年6月3日
+
+实验记录：
+
+1，模型： 无边界检测，bagging训练样本，构造多个决策树，之后得到一个准线性核矩阵，生成一个QLSVM分类器。
+
+2，对比分类器： RBFSVM , LinearSVM
+
+3，数据集：glass，有8类数据，看作是不平衡数据集。
+
+4，实验总结：
+	这个数据集三个SVM分类器效果都差不多，QL效果最好。
+	主要使用大量的数和0.2左右的max_feautures，以及使用修改后的代价函数训练。
+	在这个数据集上可以得到的结论是：
+	这里我发现对得到的RList进行聚类，聚类个数5-9成avg_num_R，效果最好。
+	QLSVM对C不敏感，且lambda值高的时候可以得到更为稀疏的核矩阵。
+
+
+5，实验结果：类1为1（70个），其他为0（144个）
+	1）RBF精度在cv测试中，精度最低，说明过拟合的很厉害
+		Model with rank: 1
+		Mean validation score: 0.799 (std: 0.075)
+		Parameters: {'kernel': 'rbf', 'C': 490.3515453762937, 'gamma': 0.11981698337959322}
+
+		Model with rank: 2
+		Mean validation score: 0.794 (std: 0.058)
+		Parameters: {'kernel': 'rbf', 'C': 304.8624128199539, 'gamma': 0.13737180625381978}
+
+		Model with rank: 3
+		Mean validation score: 0.794 (std: 0.066)
+		Parameters: {'kernel': 'rbf', 'C': 845.4498410496117, 'gamma': 0.10008882326542037}
+
+		Model with rank: 4
+		Mean validation score: 0.794 (std: 0.066)
+		Parameters: {'kernel': 'rbf', 'C': 855.0985476990155, 'gamma': 0.1021058850558549}
+
+		Model with rank: 5
+		Mean validation score: 0.794 (std: 0.066)
+		Parameters: {'kernel': 'rbf', 'C': 1054.1443686980797, 'gamma': 0.09172532972552688}
+
+	2）Linear精度在cv测试中表现出了比RBF更好的泛化能力。
+		Model with rank: 1
+		Mean validation score: 0.762 (std: 0.052)
+		Parameters: {'C': 148.33302016305996}
+
+		Model with rank: 2
+		Mean validation score: 0.762 (std: 0.052)
+		Parameters: {'C': 148.4579046691307}
+
+		Model with rank: 3
+		Mean validation score: 0.752 (std: 0.059)
+		Parameters: {'C': 100.08547361361207}
+
+		Model with rank: 4
+		Mean validation score: 0.752 (std: 0.052)
+		Parameters: {'C': 183.58665736149476}
+
+		Model with rank: 5
+		Mean validation score: 0.752 (std: 0.052)
+		Parameters: {'C': 188.29960933250348}
+
+	3）QLinear精度在cv测试中，最好，QL的好处是对C不敏感.
+		Model with rank: 1
+		Mean validation score: 0.678 (std: 0.023)
+		Parameters: {'kernel': 'precomputed', 'C': 0.36231196740955723}
+
+		Model with rank: 2
+		Mean validation score: 0.673 (std: 0.016)
+		Parameters: {'kernel': 'precomputed', 'C': 0.7786592702850007}
+
+		Model with rank: 3
+		Mean validation score: 0.673 (std: 0.016)
+		Parameters: {'kernel': 'precomputed', 'C': 0.897103331569212}
+
+		Model with rank: 4
+		Mean validation score: 0.673 (std: 0.016)
+		Parameters: {'kernel': 'precomputed', 'C': 0.8453133979530195}
+
+		Model with rank: 5
+		Mean validation score: 0.668 (std: 0.010)
+		Parameters: {'kernel': 'precomputed', 'C': 1.6948934249826213}

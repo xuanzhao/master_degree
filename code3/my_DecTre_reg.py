@@ -52,7 +52,7 @@ def lseErr(X, y, leafType):
         return 0.0
 
 
-def lseErr_regul(X, y, leafType, k=.1):
+def lseErr_regul(X, y, leafType, k=10):
     if len(np.unique(y)) != 1:
         model = leafType
         model.fit(X, y)
@@ -810,7 +810,7 @@ def get_RF_avgRList_byDBSCAN(trees):
     #R_cluster = DBSCAN(eps=0.5, min_samples=int(np.sqrt(avg_num_R)), 
     #                    metrics='precomputed').fit(connect_distance)
     R_cluster = DBSCAN(eps=0.5, min_samples=int(np.sqrt(avg_num_R)), 
-                        metrics='euclidean').fit(RF_R_centers)
+                        metric='euclidean').fit(RF_R_centers)
     #get_RF_avgRList(R_cluster):
     R_cluster_label = R_cluster.labels_
     RF_avgRList = []
