@@ -11,6 +11,7 @@ from sklearn import svm
 from __future__ import division
 # import my_DecTre_clf
 import my_DecTre_reg
+import my_QLSVM_RF
 import get_Quasi_linear_Kernel
 from sklearn.learning_curve import learning_curve
 from sklearn.learning_curve import validation_curve
@@ -82,7 +83,7 @@ Z = Z.reshape(xx.shape)
 plt.pcolormesh(xx,yy,Z, cmap=plt.cm.Paired)
 plt.imshow(Z, interpolation='nearest', cmap=plt.cm.PuOr_r)
 plt.contour(xx, yy, Z, colors=['k', 'k', 'k'], linestyles=['--', '-', '--'],
-        levels=[-.5, 0, .5])
+        levels=[-.5, 0, .5],linewidths=2)
 contours = plt.contourf(xx,yy,Z, cmap=plt.cm.Paired)
 
 # ========================= training decision Tree ===========================
@@ -130,7 +131,7 @@ print 'f1_score :', metrics.f1_score(y_test, y_pred)
 
 
 # =============== RF training and testing quasi_linear SVM ==============
-RMat = np.array(my_DecTre_reg.get_RF_avgRList(myFore))
+RMat = np.array(my_DecTre_reg.get_RF_avgRList_byAggloCluster(myFore))
 from functools import partial
 RBFinfo = partial(get_Quasi_linear_Kernel.get_RBFinfo,RMat=RMat)
 Quasi_linear_kernel = partial(get_Quasi_linear_Kernel.get_KernelMatrix,RMat=RMat)
@@ -150,6 +151,29 @@ y_pred = clf.predict(X_test)
 print 'confusion_matrix :\n', metrics.confusion_matrix(y_test, y_pred)
 print 'accuracy_score :', metrics.accuracy_score(y_test, y_pred)
 print 'f1_score :', metrics.f1_score(y_test, y_pred)
+
+
+################### QLSVM_RF CV training and testing ====================
+myFore = my_QLSVM_RF.QLSVM_clf_RF(n_trees=10, 
+							  	  leafType='LogicReg', errType='lseErr_regul',
+							  	  max_depth=5, min_samples_split=3,
+							  	  max_features=.2)
+myFore.fit(X, Y)
+
+skf = cross_validation.StratifiedKFold(Y, n_folds=3)
+
+for train_index, test_index in skf:
+	X_train, X_test = X[train_index], X[test_index]
+	y_train, y_test = Y[train_index], Y[test_index]
+
+	myFore.get_QLSVM_RF(X_train, y_train)
+	y_pred = myFore.QLSVM_predict(X_test)
+	print '*'*100, 'current CV :', '*'*100,'\n'
+	#print 'confusion_matrix :\n', metrics.confusion_matrix(y_test, y_pred)
+	print 'accuracy_score :', metrics.accuracy_score(y_test, y_pred)
+	print 'recall_score :', metrics.recall_score(y_test, y_pred)
+	print 'f1_score :', metrics.f1_score(y_test, y_pred)
+	print '*'*200
 
 # ================= training and testing RBF SVM ========================
 
@@ -303,7 +327,6 @@ Linear_SVM_param_dist = {'kernel': ['linear'],
 
 
 QL_SVM_param_dist= {'kernel': ['precomputed'],
-					'gamma': sp.stats.expon(scale=.1),
 					'C': sp.stats.expon(scale=1000)}
                     # 'C': [0.01, 0.05, 0.1, 0.5, 1, 10, 20, 30, 40, 50, 
                     # 	  70, 90, 100, 150, 200, 250, 300, 350, 400, 450,

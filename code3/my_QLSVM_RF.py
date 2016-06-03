@@ -699,7 +699,7 @@ class QLSVM_clf_RF(object):
             K_train = Quasi_linear_kernel(X_train,X_train) # for training SVM
             # run randomized search get best QL SVM
             clf = SVC(kernel='precomputed')
-            n_iter_search = 50
+            n_iter_search = 100
             random_search = RandomizedSearchCV(clf, param_distributions=QL_SVM_param_dist,
                                            n_iter=n_iter_search)
             random_search.fit(K_train, y_train)
