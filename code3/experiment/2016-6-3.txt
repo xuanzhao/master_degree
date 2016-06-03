@@ -9,10 +9,11 @@
 3，数据集：glass，有8类数据，看作是不平衡数据集。
 
 4，实验总结：
-	这个数据集三个SVM分类器效果都差不多，QL效果最好。
+	这个数据集三个SVM分类器效果都差不多，RBF效果最好，然后是QLSVM。这个数据集核的个数在7左右比较好。
 	主要使用大量的数和0.2左右的max_feautures，以及使用修改后的代价函数训练。
 	在这个数据集上可以得到的结论是：
-	这里我发现对得到的RList进行聚类，聚类个数5-9成avg_num_R，效果最好。
+	通过一直试聚类的百分比，我发现对得到的RList进行聚类，聚类个数1-9成avg_num_R，都有可能得到好的结果。
+	好的核的个数跟数据相关，如果数据需要的核少，则浅的树就可以学的比较好。
 	QLSVM对C不敏感，且lambda值高的时候可以得到更为稀疏的核矩阵。
 
 
@@ -61,21 +62,21 @@
 
 	3）QLinear精度在cv测试中，最好，QL的好处是对C不敏感.
 		Model with rank: 1
-		Mean validation score: 0.678 (std: 0.023)
-		Parameters: {'kernel': 'precomputed', 'C': 0.36231196740955723}
+		Mean validation score: 0.790 (std: 0.030)
+		Parameters: {'kernel': 'precomputed', 'C': 229.46405627040568}
 
 		Model with rank: 2
-		Mean validation score: 0.673 (std: 0.016)
-		Parameters: {'kernel': 'precomputed', 'C': 0.7786592702850007}
+		Mean validation score: 0.790 (std: 0.030)
+		Parameters: {'kernel': 'precomputed', 'C': 226.328874789679}
 
 		Model with rank: 3
-		Mean validation score: 0.673 (std: 0.016)
-		Parameters: {'kernel': 'precomputed', 'C': 0.897103331569212}
+		Mean validation score: 0.790 (std: 0.030)
+		Parameters: {'kernel': 'precomputed', 'C': 236.92354440234956}
 
 		Model with rank: 4
-		Mean validation score: 0.673 (std: 0.016)
-		Parameters: {'kernel': 'precomputed', 'C': 0.8453133979530195}
+		Mean validation score: 0.790 (std: 0.039)
+		Parameters: {'kernel': 'precomputed', 'C': 198.63050344899983}
 
 		Model with rank: 5
-		Mean validation score: 0.668 (std: 0.010)
-		Parameters: {'kernel': 'precomputed', 'C': 1.6948934249826213}
+		Mean validation score: 0.790 (std: 0.051)
+		Parameters: {'kernel': 'precomputed', 'C': 144.21731874020128}

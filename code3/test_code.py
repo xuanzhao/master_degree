@@ -14,6 +14,7 @@ from sklearn import svm
 from __future__ import division
 # import my_DecTre_clf
 import my_DecTre_reg
+import my_QLSVM_RF
 import get_Quasi_linear_Kernel
 from sklearn.learning_curve import learning_curve
 from sklearn.learning_curve import validation_curve
@@ -64,23 +65,72 @@ X_std  = np.std(X,axis=0)
 X = (X - X_mean) / X_std
 X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.33)
 
+# ========================= separate boundary data ========================
+X_bound,X_nonB = my_DecTre_reg.get_boundary(X,Y)
+Y_b = X_bound[:,-1]
+X_b = X_bound[:,:-1]
+Y_nb = X_nonB[:,-1]
+X_nb = X_nonB[:,:-1]
 
+plt.figure(1)
+plt.scatter(X_b[:, 0], X_b[:, 1], marker='o', c=Y_b)
+plt.figure(2)
+plt.scatter(X_nb[:, 0], X_nb[:, 1], marker='o', c=Y_nb)
 
 # ========================== training RF =====================================
 start = time()
-myFore = my_DecTre_reg.RF_fit(X, Y, n_trees=10, 
+myFore = my_DecTre_reg.RF_fit(X, Y, n_trees=200, 
 							  leafType='LogicReg', errType='lseErr_regul',
-							  max_depth=5, min_samples_split=3,
-							  max_features=.2)
+							  max_depth=None, min_samples_split=3,
+							  max_features=.3)
 end = time() - start
+
+
 # y_pred = my_DecTre_reg.RF_predict(X, myFore)
 
-# print 'confusion_matrix :\n', metrics.confusion_matrix(y_test, y_pred)
-# print 'accuracy_score :', metrics.accuracy_score(y_test, y_pred)
-# print 'f1_score :', metrics.f1_score(y_test, y_pred)
+print 'confusion_matrix :\n', metrics.confusion_matrix(y_test, y_pred)
+print 'accuracy_score :', metrics.accuracy_score(y_test, y_pred)
+print 'f1_score :', metrics.f1_score(y_test, y_pred)
+
 cv = cross_validation.ShuffleSplit(X.shape[0], n_iter=5, test_size=0.3,random_state=0)
 scores = cross_validation.cross_val_score(myFore,X,Y,cv=5)
 print 'accuracy_score: %0.2f (+/-) %.2f' % (scores.mean(), scores.std()*2)
+
+
+
+################### QLSVM_RF CV training and testing ====================
+start = time()
+myFore = my_QLSVM_RF.QLSVM_clf_RF(n_trees=20, 
+                    leafType='LogicReg', errType='lseErr_regul',
+                    max_depth=None, min_samples_split=2,
+                    max_features=.3)
+myFore.fit(X, Y)
+end = time() - start
+
+skf = cross_validation.StratifiedKFold(Y, n_folds=5,
+                                      shuffle=True,random_state=13)
+
+accuracy_score = []
+recall_score = []
+f1_score = []
+
+for train_index, test_index in skf:
+  X_train, X_test = X[train_index], X[test_index]
+  y_train, y_test = Y[train_index], Y[test_index]
+
+  myFore.get_QLSVM_RF(X_train, y_train)
+  y_pred = myFore.QLSVM_predict(X_test)
+  print '*'*70, 'current CV :', '*'*70,'\n'
+  #print 'confusion_matrix :\n', metrics.confusion_matrix(y_test, y_pred)
+  print 'y_test is \n', y_test
+  print 'accuracy_score :', metrics.accuracy_score(y_test, y_pred)
+  print 'recall_score :', metrics.recall_score(y_test, y_pred)
+  print 'f1_score :', metrics.f1_score(y_test, y_pred)
+  print '*'*150
+  accuracy_score.append(metrics.accuracy_score(y_test, y_pred))
+  recall_score.append(metrics.recall_score(y_test, y_pred))
+  f1_score.append(metrics.f1_score(y_test, y_pred))
+
 
 # =============== RF training and testing quasi_linear SVM ==============
 RMat = np.array(my_DecTre_reg.get_RF_avgRList_byAggloCluster(myFore))

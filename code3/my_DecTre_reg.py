@@ -13,7 +13,7 @@ from sklearn.neighbors import NearestNeighbors
 
 SGDClf = linear_model.SGDClassifier(loss='modified_huber',penalty='l1')
 
-LogicReg = linear_model.LogisticRegression(penalty='l2', C=5.0)
+LogicReg = linear_model.LogisticRegression(penalty='l2', C=10.0)
 
 RidgeReg = linear_model.Ridge(alpha=1.0)
 
@@ -52,7 +52,7 @@ def lseErr(X, y, leafType):
         return 0.0
 
 
-def lseErr_regul(X, y, leafType, k=10):
+def lseErr_regul(X, y, leafType, k=0.5):
     if len(np.unique(y)) != 1:
         model = leafType
         model.fit(X, y)
@@ -769,7 +769,7 @@ def get_RF_avgRList_byAggloCluster(trees):
     connect_graph = kneighbors_graph(RF_R_centers, n_neighbors=int(np.sqrt(len(trees)-1)), include_self=False)
     # connect_graph shape = (m,m) , if neibor then value=1, else=0
     
-    R_cluster = AgglomerativeClustering(n_clusters=int(.8*avg_num_R), connectivity=connect_graph,
+    R_cluster = AgglomerativeClustering(n_clusters=int(0.8*avg_num_R), connectivity=connect_graph,
                                     linkage='ward').fit(RF_R_centers)
 
     #get_RF_avgRList(R_cluster):

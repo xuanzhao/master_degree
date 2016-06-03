@@ -13,7 +13,7 @@ from sklearn.neighbors import NearestNeighbors
 
 SGDClf = linear_model.SGDClassifier(loss='modified_huber',penalty='l1')
 
-LogicReg = linear_model.LogisticRegression(penalty='l2', C=1.0)
+LogicReg = linear_model.LogisticRegression(penalty='l2', C=10.0)
 
 RidgeReg = linear_model.Ridge(alpha=1.0)
 
@@ -52,7 +52,7 @@ def lseErr(X, y, leafType):
         return 0.0
 
 
-def lseErr_regul(X, y, leafType, k=.1):
+def lseErr_regul(X, y, leafType, k=.5):
     if len(np.unique(y)) != 1:
         model = leafType
         model.fit(X, y)
@@ -688,11 +688,14 @@ class QLSVM_clf_RF(object):
         QL_SVM_param_dist= {'kernel': ['precomputed'],
                         'C': sp.stats.expon(scale=1000)}
 
+        RF_R_clus_List = []
         # get QLSVM_List and RF_weights
         for i,tree in enumerate(trees):
 
-            # get tree's RMat
-            RMat = np.array(tree.tree.get_RList()) # (m,n,2)
+            # get tree's cluster RMat
+            R_clus_List = self.get_RList_byAggloCluster(tree.tree.get_RList())
+            RF_R_clus_List.append(R_clus_List)
+            RMat = np.array(R_clus_List) # (m,n,2)
             # get QL kernel matrix
             RBFinfo = partial(get_Quasi_linear_Kernel.get_RBFinfo,RMat=RMat,lamb=lamb)
             Quasi_linear_kernel = partial(get_Quasi_linear_Kernel.get_KernelMatrix,RMat=RMat)
@@ -713,7 +716,10 @@ class QLSVM_clf_RF(object):
             K_oob = Quasi_linear_kernel(X_oob,X_train)     # for get SVM weight
             oob_pred = random_search.best_estimator_.predict(K_oob) # (m,1)
             print '\nQLSVM number %d get f1_scores %f\n' % (i, metrics.f1_score(y_oob, oob_pred))
-            f1_scores.append(metrics.f1_score(y_oob, oob_pred))
+            print '\nQLSVM number %d get accuracy_score %f\n' % (i, metrics.accuracy_score(y_oob, oob_pred))
+            print '\nQLSVM number %d get recall_score %f\n' % (i, metrics.recall_score(y_oob, oob_pred))
+            clf_weight = metrics.f1_score(y_oob, oob_pred)+0.01
+            f1_scores.append(clf_weight)
 
 
         f1_scores = np.array(f1_scores)
@@ -732,6 +738,8 @@ class QLSVM_clf_RF(object):
         print 'done get QLSVM_List : ', QLSVM_List 
         print '*'*100
 
+        self.RF_R_clus_List = RF_R_clus_List
+        print 'done get RF_R_clus_List'
 
     def QLSVM_predict(self, X_test):
         '''QLSVM_predict
@@ -740,30 +748,63 @@ class QLSVM_clf_RF(object):
         from functools import partial
         from sklearn.svm import SVC
 
-        trees = self.trees
         QLSVM_List = self.QLSVM_List
         RF_weights = self.RF_weights
         X_train = self.QLSVM_X_train
         lamb = self.QLSVM_lamb
 
-
+        self.RF_R_clus_List = self.RF_R_clus_List
         y_pred = np.zeros((len(X_test),len(QLSVM_List)))
 
-        for i,tree in enumerate(trees):
+        for i,clf in enumerate(QLSVM_List):
 
-            RMat = np.array(tree.tree.get_RList()) # (m,n,2)
+            RMat = np.array(self.RF_R_clus_List[i]) # (m,n,2)
             RBFinfo = partial(get_Quasi_linear_Kernel.get_RBFinfo,RMat=RMat,lamb=lamb)
             Quasi_linear_kernel = partial(get_Quasi_linear_Kernel.get_KernelMatrix,RMat=RMat)
 
             K_test = Quasi_linear_kernel(X_test,X_train)
-            y_pred[:,i] = QLSVM_List[i].predict(K_test) * RF_weights[i]
+            y_pred[:,i] = clf.predict(K_test) * RF_weights[i] 
+            print 'number %d QLSVM predict value is \n' %i
+            print y_pred[:,i] 
+            #y_pred[:, i] = QLSVM_List[i].predict(K_test)
 
-        final_y_pred_prob = np.sum(y_pred, axis=1)  
-        final_y_pred = np.where(final_y_pred_prob>0.5, 1, 0)
+        final_y_pred_prob = np.sum(y_pred, axis=1) 
+        print 'final_y_pred_prob is \n',final_y_pred_prob
+        final_y_pred = np.where(final_y_pred_prob>=0.5, 1, 0)
 
         return final_y_pred
 
+    def get_RList_byAggloCluster(self, RList):
+    
+        from sklearn.cluster import AgglomerativeClustering
+        from sklearn.neighbors import kneighbors_graph
 
+
+        R_Mat = np.array(RList)  #(m,n,2), col0=center, col1=radius
+        R_centers = R_Mat[:,:,0]  # (m,n)
+        R_radius = R_Mat[:,:,1]   # (m,n)
+
+        # get the connectivity graph of R_list
+        #connect_graph = kneighbors_graph(RF_R_centers, n_neighbors=int(np.sqrt(len(trees)-1)), include_self=False)
+        # connect_graph shape = (m,m) , if neibor then value=1, else=0
+        
+        R_cluster = AgglomerativeClustering(n_clusters=int(0.3*R_Mat.shape[0]),
+                                            connectivity=None,
+                                            linkage='ward').fit(R_centers)
+
+        #get_RF_avgRList(R_cluster):
+        R_cluster_label = R_cluster.labels_
+        R_cluster_List = []
+
+        for label in np.unique(R_cluster_label):
+            R_mean  = np.mean(R_centers[R_cluster_label == label], axis=0)
+            R_radi = np.mean(R_radius[R_cluster_label == label], axis=0)
+
+            R = np.c_[R_mean, R_radi] # shape (n,2)
+            R_cluster_List.append(R)
+
+    
+        return R_cluster_List
 
 
 
