@@ -752,7 +752,7 @@ def get_RF_avgRList(trees):
     # connect_graph shape = (m,m) , if neibor then value=1, else=0
 
     # compute clustering
-    R_cluster = AgglomerativeClustering(n_clusters=avg_num_R, connectivity=connect_graph,
+    R_cluster = AgglomerativeClustering(n_clusters=int(0.7*avg_num_R), connectivity=connect_graph,
                                     linkage='ward').fit(RF_R_centers)
 
     #get_RF_avgRList(R_cluster):

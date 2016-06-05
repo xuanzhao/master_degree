@@ -19,6 +19,7 @@ def get_RBFinfo(X, RMat, lamb=2):
 	R_std = np.true_divide(R, np.sum(R,axis=1))
 	New_R_std = np.nan_to_num(R_std)
 
+
 	print 'down get R, R shape is ',R.shape
 	return New_R_std    # (m,k)
 

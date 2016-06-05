@@ -38,7 +38,7 @@ plt.scatter(X[:, 0], X[:, 1], marker='o', c=Y, cmap=plt.cm.Paired)
 
 plt.subplot(313)
 plt.title("Gaussian divided into three quantiles", fontsize='small')
-X, Y = make_gaussian_quantiles(n_samples=1000,n_features=10, n_classes=2, 
+X, Y = make_gaussian_quantiles(n_samples=300,n_features=2, n_classes=2, 
 								mean=None,cov=1.0,random_state=13)
 plt.scatter(X[:, 0], X[:, 1], marker='o', c=Y)
 
@@ -72,7 +72,7 @@ plt.figure(2)
 plt.scatter(X_nb[:, 0], X_nb[:, 1], marker='o', c=Y_nb)
 
 #========================== plot data face ================================
-plot_step = 0.01
+plot_step = 0.1
 x_min = X[:, 0].min() 
 x_max = X[:, 0].max() 
 y_min = X[:, 1].min() 
@@ -86,6 +86,9 @@ plt.contour(xx, yy, Z, colors=['k', 'k', 'k'], linestyles=['--', '-', '--'],
         levels=[-.5, 0, .5],linewidths=2)
 contours = plt.contourf(xx,yy,Z, cmap=plt.cm.Paired)
 
+#==========================plot RList point =================================
+plt.scatter(RMat[:,0,0], RMat[:,0,1], marker='o', c=Y_nb)
+
 # ========================= training decision Tree ===========================
 myTree = my_DecTre_clf.DecisionTreeClassifier(max_depth=5)
 myTree.fit(X_train, y_train)
@@ -98,7 +101,7 @@ myTree.fit(X_train, y_train)
 y_pred = myTree.predict(X_test)
 
 print 'confusion_matrix :\n', metrics.confusion_matrix(y_test, y_pred)
-print 'accuracy_score :', metrics.accuracy_score(y_test, y_pred)
+print 'precision_score :', metrics.precision_score(y_test, y_pred)
 print 'f1_score :', metrics.f1_score(y_test, y_pred)
 
 # ========== decision tree training and testingquasi_linear SVM ==========
@@ -114,7 +117,7 @@ clf.fit(X_train, y_train)
 # scatter(X_test[:,0],X_test[:,1], c=y_test)
 y_pred = clf.predict(X_test)
 print 'confusion_matrix :\n', metrics.confusion_matrix(y_test, y_pred)
-print 'accuracy_score :', metrics.accuracy_score(y_test, y_pred)
+print 'precision_score :', metrics.precision_score(y_test, y_pred)
 print 'f1_score :', metrics.f1_score(y_test, y_pred)
 
 
