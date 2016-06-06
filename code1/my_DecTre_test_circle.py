@@ -1,4 +1,4 @@
-import my_QLSVM_RF
+import my_DecTre_reg
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn import metrics
@@ -8,22 +8,22 @@ from sklearn.datasets import make_circles
 # ========================= generate data ============================
 
 np.random.seed(0)
-X, y = make_circles(n_samples=400, factor=.5, noise=.05)
+X, Y = make_circles(n_samples=500, factor=.6, noise=.09)
 
 
 n_sample = len(X)
 np.random.seed(0)
 order = np.random.permutation(n_sample)
 X = X[order]
-y = y[order]
+Y = Y[order]
 
 X_train = X[:.7 * n_sample]
-y_train = y[:.7 * n_sample]
+y_train = Y[:.7 * n_sample]
 X_test = X[.7 * n_sample:]
-y_test = y[.7 * n_sample:]
+y_test = Y[.7 * n_sample:]
 
 #========================== plot data ================================
-plt.scatter(X[:, 0], X[:, 1], c=y, zorder=10, cmap=plt.cm.Paired)
+plt.scatter(X[:, 0], X[:, 1], c=Y, zorder=10, cmap=plt.cm.Paired)
 
 # Circle out the test data
 plt.scatter(X_test[:, 0], X_test[:, 1], s=80, zorder=10)
