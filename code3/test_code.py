@@ -64,13 +64,13 @@ X_mean = np.mean(X,axis=0)
 X_std  = np.std(X,axis=0)
 X = (X - X_mean) / X_std
 
-# ==========================QLSVM_RF testing ===============
+# ==========================QLSVM_RF training and testing ===============
 X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.33)
 
 
 myFore.get_QLSVM_RF(X_train, y_train)
 y_pred = myFore.QLSVM_predict(X_test,y_test)
-print '*'*35, 'current CV :','*'*35,
+print '*'*70, 'current CV :', '*'*70,'\n'
 #print 'confusion_matrix :\n', metrics.confusion_matrix(y_test, y_pred)
 print 'y_test is \n', y_test
 print 'accuracy_score :', metrics.precision_score(y_test, y_pred)
@@ -104,10 +104,11 @@ myFore = my_DecTre_reg.RF_fit(X, Y, n_trees=200,
 							  max_features=.3)
 end = time() - start
 
-y_pred = my_DecTre_reg.RF_predict(X_test, myFore)
+
+# y_pred = my_DecTre_reg.RF_predict(X, myFore)
 
 print 'confusion_matrix :\n', metrics.confusion_matrix(y_test, y_pred)
-print 'precision :', metrics.precision_score(y_test, y_pred)
+print 'accuracy_score :', metrics.accuracy_score(y_test, y_pred)
 print 'f1_score :', metrics.f1_score(y_test, y_pred)
 
 cv = cross_validation.ShuffleSplit(X.shape[0], n_iter=5, test_size=0.3,random_state=0)
@@ -125,13 +126,6 @@ myFore = my_QLSVM_RF.QLSVM_clf_RF(n_trees=20,
 myFore.fit(X, Y)
 end = time() - start
 
-y_pred = myFore.RF_predict(X_test)
-
-print 'confusion_matrix :\n', metrics.confusion_matrix(y_test, y_pred)
-print 'precision :', metrics.precision_score(y_test, y_pred)
-print 'f1_score :', metrics.f1_score(y_test, y_pred)
-
-
 skf = cross_validation.StratifiedKFold(Y, n_folds=5,
                                       shuffle=True,random_state=13)
 
@@ -145,7 +139,7 @@ for train_index, test_index in skf:
 
   myFore.get_QLSVM_RF(X_train, y_train)
   y_pred = myFore.QLSVM_predict(X_test,y_test)
-  print '*'*35, 'current CV :''*'*35,'\n'
+  print '*'*70, 'current CV :', '*'*70,'\n'
   #print 'confusion_matrix :\n', metrics.confusion_matrix(y_test, y_pred)
   print 'y_test is \n', y_test
   print 'precision_score :', metrics.precision_score(y_test, y_pred)
