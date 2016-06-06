@@ -43,7 +43,7 @@ def lseErr(X, y, leafType):
             #print 'now use predict method, leaf model is \n',model
             yHat = model.predict(X)
             
-        error = np.sum(np.power(y[:,np.newaxis] - yHat, 2)) / len(yHat)
+        error = np.sum(np.power(y[:,np.newaxis] - yHat, 2))
 
         #yHat = model.predict_log_proba(X)
         #error = metrics.log_loss(y, yHat)
@@ -72,7 +72,7 @@ def lseErr_regul(X, y, leafType, k=0.5):
         X0_delta = X[y==0] - X1_mean
         X_delta = np.r_[X1_delta, X0_delta]
         error = (np.sum(np.power(y[:,np.newaxis] - yHat, 2))  + \
-                k * np.sum(np.power(X_delta, 2)) ) / len(yHat)
+                k * np.sum(np.power(X_delta, 2)) ) 
 
         #yHat = model.predict_log_proba(X)
         #error = metrics.log_loss(y, yHat)
