@@ -44,7 +44,7 @@ def lseErr(X, y, leafType):
             #print 'now use predict method, leaf model is \n',model
             yHat = model.predict(X)
             
-        error = np.sum(np.power(y[:,np.newaxis] - yHat, 2)) / len(yHat)
+        error = np.sum(np.power(y[:,np.newaxis] - yHat, 2))
 
         #yHat = model.predict_log_proba(X)
         #error = metrics.log_loss(y, yHat)
@@ -73,7 +73,7 @@ def lseErr_regul(X, y, leafType, k=.5):
         X0_delta = X[y==0] - X1_mean
         X_delta = np.r_[X1_delta, X0_delta]
         error = (np.sum(np.power(y[:,np.newaxis] - yHat, 2))  + \
-                k * np.sum(np.power(X_delta, 2)) ) / len(yHat)
+                k * np.sum(np.power(X_delta, 2)) )
 
         #yHat = model.predict_log_proba(X)
         #error = metrics.log_loss(y, yHat)
@@ -655,7 +655,7 @@ class QLSVM_clf_RF(object):
             tree.fit(X_boot_train, y_boot_train)
 
         self.trees = trees
-        self.data_oob_List = data_oob_List
+        self.data_oob_List = data_oob_List  # each element is a array
         return self  # type is list
 
     def RF_predict(self, X_test):
@@ -746,7 +746,8 @@ class QLSVM_clf_RF(object):
         print '*'*100
 
         self.RF_R_clus_List = RF_R_clus_List
-        print 'done get RF_R_clus_List'
+        print 'done get RF_R_clus_List shape is ' ,np.array(self.RF_R_clus_List).shape
+
 
     def QLSVM_predict(self, X_test, y_test):
         '''QLSVM_predict
@@ -759,13 +760,13 @@ class QLSVM_clf_RF(object):
         RF_weights = self.RF_weights
         X_train = self.QLSVM_X_train
         lamb = self.QLSVM_lamb
+        RF_R_clus_List = self.RF_R_clus_List
 
-        self.RF_R_clus_List = self.RF_R_clus_List
         y_pred = np.zeros((len(X_test),len(QLSVM_List)))
 
         for i,clf in enumerate(QLSVM_List):
 
-            RMat = np.array(self.RF_R_clus_List[i]) # (m,n,2)
+            RMat = np.array(RF_R_clus_List[i]) # (m,n,2)
             RBFinfo = partial(get_Quasi_linear_Kernel.get_RBFinfo,RMat=RMat,lamb=lamb)
             Quasi_linear_kernel = partial(get_Quasi_linear_Kernel.get_KernelMatrix,RMat=RMat)
 
@@ -802,11 +803,12 @@ class QLSVM_clf_RF(object):
         # connect_graph shape = (m,m) , if neibor then value=1, else=0
         #0.55*R_Mat.shape[0]
         try:
-            R_cluster = AgglomerativeClustering(n_clusters=int(np.random.rand()*15+1),
+            R_cluster = AgglomerativeClustering(n_clusters=int(R_Mat.shape[0]*np.random.rand()*0.9)-5,
                                                 connectivity=None,
                                                 linkage='ward').fit(R_centers)
         except ValueError,e:
-            R_cluster = AgglomerativeClustering(n_clusters=int(0.5*R_Mat.shape[0]),
+            print 'ValueError ',e
+            R_cluster = AgglomerativeClustering(n_clusters=int(0.2*R_Mat.shape[0])+1,
                                                 connectivity=None,
                                                 linkage='ward').fit(R_centers)
         #get_RF_avgRList(R_cluster):
@@ -821,7 +823,7 @@ class QLSVM_clf_RF(object):
             R_cluster_List.append(R)
 
     
-        return R_cluster_List
+        return R_cluster_List   # type is list, len=m
 
 
 
