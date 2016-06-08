@@ -769,7 +769,7 @@ def get_RF_avgRList_byAggloCluster(trees):
     connect_graph = kneighbors_graph(RF_R_centers, n_neighbors=int(np.sqrt(len(trees)-1)), include_self=False)
     # connect_graph shape = (m,m) , if neibor then value=1, else=0
     
-    R_cluster = AgglomerativeClustering(n_clusters=int(12), connectivity=connect_graph,
+    R_cluster = AgglomerativeClustering(n_clusters=int(0.3*avg_num_R), connectivity=connect_graph,
                                     linkage='ward').fit(RF_R_centers)
 
     #get_RF_avgRList(R_cluster):

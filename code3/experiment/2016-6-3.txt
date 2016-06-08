@@ -17,7 +17,7 @@
 	QLSVM对C不敏感，且lambda值高的时候可以得到更为稀疏的核矩阵。
 
 
-5，实验结果：类1为1（70个），其他为0（144个）， CV=5
+5，实验结果：glass(214,8),label=8,类1为1（70个），其他为0（144个）， CV=5
 	1）RBF精度在cv测试中，精度最低，说明过拟合的很厉害
 		Model with rank: 1
 		Mean validation score: 0.850 (std: 0.058)
@@ -63,21 +63,21 @@
 	3）QLinear精度在cv测试中，最好，QL的好处是对C不敏感.
 
 		Model with rank: 1
-		Mean validation score: 0.861 (std: 0.054)
+		Mean validation score: 0.851 (std: 0.054)
 		Parameters: {'kernel': 'precomputed', 'C': 4448.849308865498}
 
 		Model with rank: 2
-		Mean validation score: 0.861 (std: 0.054)
+		Mean validation score: 0.851 (std: 0.054)
 		Parameters: {'kernel': 'precomputed', 'C': 4468.16406747459}
 
 		Model with rank: 3
-		Mean validation score: 0.861 (std: 0.057)
+		Mean validation score: 0.851 (std: 0.057)
 		Parameters: {'kernel': 'precomputed', 'C': 2467.5816193115597}
 
 		Model with rank: 4
-		Mean validation score: 0.861 (std: 0.057)
+		Mean validation score: 0.851 (std: 0.057)
 		Parameters: {'kernel': 'precomputed', 'C': 2562.1187119181527}
 
 		Model with rank: 5
-		Mean validation score: 0.861 (std: 0.057)
+		Mean validation score: 0.851 (std: 0.057)
 		Parameters: {'kernel': 'precomputed', 'C': 2590.23651580767}

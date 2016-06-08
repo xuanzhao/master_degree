@@ -17,27 +17,27 @@
 	QLSVM对C不敏感，且lambda值高的时候可以得到更为稀疏的核矩阵。
 
 
-5，实验结果： 一共4177条数据，类1为9（689个），其他为0（3488个）， CV=5
+5，实验结果： abalone(4177,8)，类1为9（689个），其他为0（3488个）， CV=5
 	1）RBF精度在cv测试中，精度最低，说明过拟合的很厉害
 		Model with rank: 1
-		Mean validation score: 0.850 (std: 0.058)
-		Parameters: {'kernel': 'rbf', 'C': 86.8230723382427, 'gamma': 0.0863468898091713}
+		Mean validation score: 0.835 (std: 0.000)
+		Parameters: {'kernel': 'rbf', 'C': 19.413964763749693, 'gamma': 0.030666795169844503}
 
 		Model with rank: 2
-		Mean validation score: 0.850 (std: 0.058)
-		Parameters: {'kernel': 'rbf', 'C': 580.1706640942285, 'gamma': 0.06300117657642305}
+		Mean validation score: 0.835 (std: 0.000)
+		Parameters: {'kernel': 'rbf', 'C': 42.9914207351022, 'gamma': 0.0616468233484939}
 
 		Model with rank: 3
-		Mean validation score: 0.850 (std: 0.054)
-		Parameters: {'kernel': 'rbf', 'C': 366.84156378489223, 'gamma': 0.06681457931791712}
+		Mean validation score: 0.835 (std: 0.000)
+		Parameters: {'kernel': 'rbf', 'C': 1175.7763325051044, 'gamma': 0.008270469537776055}
 
 		Model with rank: 4
-		Mean validation score: 0.850 (std: 0.054)
-		Parameters: {'kernel': 'rbf', 'C': 352.1110327579989, 'gamma': 0.0691276668547136}
+		Mean validation score: 0.835 (std: 0.000)
+		Parameters: {'kernel': 'rbf', 'C': 211.79678622836192, 'gamma': 0.002143263678488726}
 
 		Model with rank: 5
-		Mean validation score: 0.850 (std: 0.067)
-		Parameters: {'kernel': 'rbf', 'C': 69.71936748706285, 'gamma': 0.15681265892878804}
+		Mean validation score: 0.835 (std: 0.000)
+		Parameters: {'kernel': 'rbf', 'C': 157.9257545063007, 'gamma': 0.0406788252230939}
 
 	2）Linear精度在cv测试中表现出了比RBF更好的泛化能力。
 		Model with rank: 1

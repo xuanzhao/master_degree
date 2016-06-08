@@ -21,7 +21,6 @@ from sklearn.learning_curve import validation_curve
 
 from time import time
 from operator import itemgetter
-from sklearn.grid_search import GridSearchCV, RandomizedSearchCV
 from sklearn.metrics import classification_report
 from sklearn.datasets import fetch_mldata
 
@@ -55,6 +54,10 @@ Y  = np.where(Y==1, 1, 0)
 data = fetch_mldata('glass')
 X = data['data'] ; Y = data['target']
 Y  = np.where(Y==1, 1, 0)
+
+data = fetch_mldata('abalone')
+X = data['data'] ; Y = data['target']
+Y  = np.where(Y==9, 1, 0)
 
 # ========================== standardize data ===========================
 from sklearn.preprocessing import StandardScaler
@@ -105,10 +108,11 @@ myFore = my_DecTre_reg.RF_fit(X, Y, n_trees=200,
 end = time() - start
 
 
-# y_pred = my_DecTre_reg.RF_predict(X, myFore)
+y_pred = my_DecTre_reg.RF_predict(X_test, myFore)
 
 print 'confusion_matrix :\n', metrics.confusion_matrix(y_test, y_pred)
-print 'accuracy_score :', metrics.accuracy_score(y_test, y_pred)
+print 'precision_score :', metrics.precision_score(y_test, y_pred)
+print 'recall_score :', metrics.recall_score(y_test, y_pred)
 print 'f1_score :', metrics.f1_score(y_test, y_pred)
 
 cv = cross_validation.ShuffleSplit(X.shape[0], n_iter=5, test_size=0.3,random_state=0)
@@ -126,7 +130,7 @@ myFore = my_QLSVM_RF.QLSVM_clf_RF(n_trees=20,
 myFore.fit(X, Y)
 end = time() - start
 
-skf = cross_validation.StratifiedKFold(Y, n_folds=5,
+skf = cross_validation.StratifiedKFold(Y, n_folds=3,
                                       shuffle=True,random_state=13)
 
 precision_score = []
@@ -206,7 +210,8 @@ QL_SVM_param_dist= {'kernel': ['precomputed'],
                     # 	  70, 90, 100, 150, 200, 250, 300, 350, 400, 450,
                     # 	  500, 550, 600, 700, 800, 900, 1000]}
 
-
+skf = cross_validation.StratifiedKFold(Y, n_folds=3,
+                                      shuffle=True,random_state=13)
 # K_train = Quasi_linear_kernel(X_train,X_train)
 # K_test = Quasi_linear_kernel(X_test,X_train)
 K_X = Quasi_linear_kernel(X,X)
@@ -214,9 +219,9 @@ clf = svm.SVC(kernel='precomputed')
 # y_pred = clf.predict(K_test)
 
 # run randomized search
-n_iter_search = 50
+n_iter_search = 300
 random_search = RandomizedSearchCV(clf, param_distributions=QL_SVM_param_dist,
-                                   n_iter=n_iter_search)
+                                   n_iter=n_iter_search, cv=skf)
 start = time()
 random_search.fit(K_X, Y.ravel())
 print("Quasi_linear kernel SVM RandomSearch took %.2f seconds for %d candidates"
@@ -230,7 +235,7 @@ report(random_search.grid_scores_,n_top=5)
 # print()
 
 # run grid search
-grid_search = GridSearchCV(clf, param_grid=QL_SVM_param_dist)
+grid_search = GridSearchCV(clf, param_grid=QL_SVM_param_dist, cv=skf)
 start = time()
 grid_search.fit(K_X, Y.ravel())
 print("GridSearchCV took %.2f seconds for %d candidate parameter settings."
@@ -243,19 +248,42 @@ print(classification_report(y_test, y_pred))
 print()
 
 
-clf = svm.SVC(kernel='rbf')
-# run randomized search
-n_iter_search = 40
-random_search = RandomizedSearchCV(clf, param_distributions=RBF_SVM_param_dist,
-                                   n_iter=n_iter_search)
-start = time()
-random_search.fit(X, Y.ravel())
-print("RBF_linear kernel SVM RandomSearch took %.2f seconds for %d candidates"
-      " parameter settings." % ((time() - start), n_iter_search))
-print("Random_search Best estimator is :\n"), random_search.best_estimator_
-report(random_search.grid_scores_,n_top=5)
-# print the classification_report
-# y_test, y_pred = y_test, random_search.predict(X_test) 
-#Call predict on the estimator with the best found parameters.
-# print(classification_report(y_test, y_pred))
-# print()
+# ===========after get best C,f1 score, get precision,recall score ======== 
+from sklearn.metrics import precision_recall_fscore_support as score
+RMat = np.array(my_DecTre_reg.get_RF_avgRList_byAggloCluster(myFore))
+RBFinfo = partial(get_Quasi_linear_Kernel.get_RBFinfo,RMat=RMat)
+Quasi_linear_kernel = partial(get_Quasi_linear_Kernel.get_KernelMatrix,RMat=RMat)
+
+# another way to pass the kernel matrix
+# K_train = Quasi_linear_kernel(X_train,X_train)
+# K_test = Quasi_linear_kernel(X_test,X_train)
+# clf = svm.SVC(kernel='precomputed')
+# clf.fit(K_train, y_train)
+# y_pred = clf.predict(K_test)
+skf = cross_validation.StratifiedKFold(Y, n_folds=3,
+                                      shuffle=True,random_state=13)
+
+precision_score = []
+recall_score = []
+f1_score = []
+
+for train_index, test_index in skf:
+    X_train, X_test = X[train_index], X[test_index]
+    y_train, y_test = Y[train_index], Y[test_index]
+    
+    clf = svm.SVC(kernel=Quasi_linear_kernel,C=)
+    clf.fit(X_train, Y_train)
+    y_pred = clf.predict(X_test)
+# scatter(X_test[:,0],X_test[:,1], c=y_test)
+# y_pred = clf.predict(X_test)
+# print 'confusion_matrix :\n', metrics.confusion_matrix(y_test, y_pred)
+# print 'accuracy_score :', metrics.accuracy_score(y_test, y_pred)
+# print 'f1_score :', metrics.f1_score(y_test, y_pred)
+    precision, recall, fscore, support = score(y_test, y_pred,average='binary')
+    print '\nQLSVM number %d get test score:\n' % i
+    print 'precision: {}'.format(precision)
+    print 'recall: {}'.format(recall)
+    print 'fscore: {}'.format(fscore)
+    precision_score.append(precision)
+    recall_score.append(recall)
+    f1_score.append(fscore)
