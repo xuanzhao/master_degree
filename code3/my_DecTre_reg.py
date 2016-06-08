@@ -735,18 +735,15 @@ def RF_fit(X_train, y_train, n_trees=10,
 
     for tree in trees:
 
-        # get random features index
-        feat_ind = np.sort(np.random.choice(n, int(np.log2(n)+1), replace=False))
         # get data samples
-        X_boot_train, y_boot_train = resample(X_train[:,feat_ind], y_train)
+        X_boot_train, y_boot_train = resample(X_train, y_train)
 
         # get oob data samples
         boot_ind = np.in1d(X_train[:,0], X_boot_train[:,0])
-        X_oob_train = X_train[~boot_ind][:,feat_ind]
+        X_oob_train = X_train[~boot_ind]
         y_oob_train = y_train[~boot_ind]
         #data_oob_list.append(np.c_[X_oob_train, y_oob_train])
 
-        tree.feat_ind = feat_ind
         tree.oob_data = np.c_[X_oob_train, y_oob_train]
         tree.fit(X_boot_train, y_boot_train)
 

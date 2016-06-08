@@ -96,7 +96,7 @@ plt.scatter(X_b[:, 0], X_b[:, 1], marker='o', c=Y_b)
 plt.figure(2)
 plt.scatter(X_nb[:, 0], X_nb[:, 1], marker='o', c=Y_nb)
 
-# ========================== RF_QLSVM =====================================
+# ========================== RF_QLSVM training and testing =====================
 start = time()
 myFore = my_RF_QLSVM.RF_QLSVM_clf(n_trees=3, 
                     leafType='LogicReg', errType='lseErr_regul',
@@ -111,10 +111,29 @@ print 'confusion_matrix :\n', metrics.confusion_matrix(y_test, y_pred)
 print 'precision :', metrics.precision_score(y_test, y_pred)
 print 'f1_score :', metrics.f1_score(y_test, y_pred)
 
-cv = cross_validation.ShuffleSplit(X.shape[0], n_iter=5, test_size=0.3,random_state=0)
-scores = cross_validation.cross_val_score(myFore,X,Y,cv=5)
-print 'accuracy_score: %0.2f (+/-) %.2f' % (scores.mean(), scores.std()*2)
+# cv = cross_validation.ShuffleSplit(X.shape[0], n_iter=5, test_size=0.3,random_state=0)
+# scores = cross_validation.cross_val_score(myFore,X,Y,cv=5)
+# print 'accuracy_score: %0.2f (+/-) %.2f' % (scores.mean(), scores.std()*2)
 
+RMat = np.array(myFore.get_RF_avgRList_byAggloCluster())
+RBFinfo = partial(get_Quasi_linear_Kernel.get_RBFinfo,RMat=RMat)
+Quasi_linear_kernel = partial(get_Quasi_linear_Kernel.get_KernelMatrix,RMat=RMat)
+
+# another way to pass the kernel matrix
+# K_train = Quasi_linear_kernel(X_train,X_train)
+# K_test = Quasi_linear_kernel(X_test,X_train)
+# clf = svm.SVC(kernel='precomputed')
+# clf.fit(K_train, y_train)
+# y_pred = clf.predict(K_test)
+
+# clf = svm.SVC(kernel=Quasi_linear_kernel)
+# clf.fit(X, Y)
+
+# scatter(X_test[:,0],X_test[:,1], c=y_test)
+# y_pred = clf.predict(X_test)
+# print 'confusion_matrix :\n', metrics.confusion_matrix(y_test, y_pred)
+# print 'accuracy_score :', metrics.accuracy_score(y_test, y_pred)
+# print 'f1_score :', metrics.f1_score(y_test, y_pred)
 
 
 ################### QLSVM_RF CV training and testing ====================
@@ -158,27 +177,6 @@ for train_index, test_index in skf:
   f1_score.append(metrics.f1_score(y_test, y_pred))
 
 
-# =============== RF training and testing quasi_linear SVM ==============
-RMat = np.array(my_DecTre_reg.get_RF_avgRList_byAggloCluster(myFore))
-RBFinfo = partial(get_Quasi_linear_Kernel.get_RBFinfo,RMat=RMat)
-Quasi_linear_kernel = partial(get_Quasi_linear_Kernel.get_KernelMatrix,RMat=RMat)
-
-# another way to pass the kernel matrix
-# K_train = Quasi_linear_kernel(X_train,X_train)
-# K_test = Quasi_linear_kernel(X_test,X_train)
-# clf = svm.SVC(kernel='precomputed')
-# clf.fit(K_train, y_train)
-# y_pred = clf.predict(K_test)
-
-# clf = svm.SVC(kernel=Quasi_linear_kernel)
-# clf.fit(X, Y)
-
-# scatter(X_test[:,0],X_test[:,1], c=y_test)
-# y_pred = clf.predict(X_test)
-# print 'confusion_matrix :\n', metrics.confusion_matrix(y_test, y_pred)
-# print 'accuracy_score :', metrics.accuracy_score(y_test, y_pred)
-# print 'f1_score :', metrics.f1_score(y_test, y_pred)
-
 
 
 
@@ -214,6 +212,8 @@ QL_SVM_param_dist= {'kernel': ['precomputed'],
                     # 	  500, 550, 600, 700, 800, 900, 1000]}
 
 
+skf = cross_validation.StratifiedKFold(Y, n_folds=3,
+                                      shuffle=False,random_state=13)
 # K_train = Quasi_linear_kernel(X_train,X_train)
 # K_test = Quasi_linear_kernel(X_test,X_train)
 K_X = Quasi_linear_kernel(X,X)
@@ -223,7 +223,7 @@ clf = svm.SVC(kernel='precomputed')
 # run randomized search
 n_iter_search = 50
 random_search = RandomizedSearchCV(clf, param_distributions=QL_SVM_param_dist,
-                                   n_iter=n_iter_search)
+                                   n_iter=n_iter_search, cv=skf)
 start = time()
 random_search.fit(K_X, Y.ravel())
 print("Quasi_linear kernel SVM RandomSearch took %.2f seconds for %d candidates"
