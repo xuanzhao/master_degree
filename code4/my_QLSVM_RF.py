@@ -813,7 +813,7 @@ class QLSVM_clf_RF(object):
         #connect_graph = kneighbors_graph(RF_R_centers, n_neighbors=int(np.sqrt(len(trees)-1)), include_self=False)
         # connect_graph shape = (m,m) , if neibor then value=1, else=0
         #0.55*R_Mat.shape[0]
-        connect_graph = kneighbors_graph(R_centers, n_neighbors=int(np.log2(len(R_centers))), include_self=False)
+        connect_graph = kneighbors_graph(R_centers, n_neighbors=int(np.sqrt(len(R_centers))), include_self=False)
 
         try:
             R_cluster = AgglomerativeClustering(n_clusters=int(R_Mat.shape[0]*np.random.rand()*0.8)-5,
