@@ -254,7 +254,7 @@ class treeNode(object):
         if featId == None: 
             self.splitIndex = None
             self.splitValue = featVal # leaf node featVal is weights
-            self.parent.RInfo = self.parent.calc_R(self.parent.dataMat)
+            self.RInfo = self.calc_R(self.parent.dataMat)
         else:
             self.splitIndex = featId
             self.splitValue = featVal
@@ -701,7 +701,7 @@ class RF_QLSVM_clf(object):
         # get the number of cluster
         avg_num_R = int( RF_R_Mat.shape[0] /len(trees))  # total R divided by number trees
         # get the connectivity graph of R_list
-        connect_graph = kneighbors_graph(RF_R_centers, n_neighbors=int(np.log2(len(trees))-1), include_self=False)
+        connect_graph = kneighbors_graph(RF_R_centers, n_neighbors=int(np.log2(len(trees))), include_self=False)
         # connect_graph shape = (m,m) , if neibor then value=1, else=0
         
         R_cluster = AgglomerativeClustering(n_clusters=int(cluster_ratio*avg_num_R), connectivity=connect_graph,
