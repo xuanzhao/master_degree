@@ -9,14 +9,14 @@
 3，数据集：sonar，特点RBF会过拟合的很厉害，甚至没有LinearSVM好。
 
 4，实验总结：
-	这个数据集三个SVM分类器效果都差不多，QL效果最好。这个数据核的个数在20-30之间比较好。
-	主要使用大量的数和0.2左右的max_feautures，以及使用修改后的代价函数训练。
+	这个数据集三个SVM分类器效果都差不多，QL效果最好。这个数据核的个数在20-30之间比较好。使用了500个数。
+	主要使用大量的树和0.2左右的max_feautures，以及使用修改后的代价函数训练。
 	在这个数据集上可以得到的结论是：
 	这里我发现对得到的RList进行聚类，聚类个数5-9成avg_num_R，效果最好。
 	QLSVM对C不敏感，且lambda值高的时候可以得到更为稀疏的核矩阵。
 
 
-5，实验结果： CV=3, sonar=(208,60),pos(1)=97,neg(-1)=111
+5，实验结果： CV=3(shuffle=False), sonar=(208,60),pos(1)=97,neg(-1)=111
 	1）RBF精度在cv测试中，精度最低，说明过拟合的很厉害
 	RBFSVM： Model with rank: 1
 		Model with rank: 1
@@ -83,7 +83,7 @@
 
 
 
-5，实验结果： 
+6，实验结果： 
 	StratifiedCV(shuffle=true)=3, sonar=(208,60),pos(1)=97,neg(-1)=111
 	1）RBF精度在cv测试中，精度最低，说明过拟合的很厉害
 		Model with rank: 1
@@ -130,4 +130,24 @@
 		Parameters: {'kernel': 'linear', 'C': 683.7503846344795}
 
 
-	3）QLinear精度在cv测试中，最好，QL的好处是对C不敏感.
+	3）QLinear SVM
+
+		Model with rank: 1
+		Mean validation score: 0.817 (std: 0.050)
+		Parameters: {'kernel': 'precomputed', 'C': 1.016955905414495}
+
+		Model with rank: 2
+		Mean validation score: 0.812 (std: 0.060)
+		Parameters: {'kernel': 'precomputed', 'C': 513.8387181219551}
+
+		Model with rank: 3
+		Mean validation score: 0.812 (std: 0.060)
+		Parameters: {'kernel': 'precomputed', 'C': 180.42025813199285}
+
+		Model with rank: 4
+		Mean validation score: 0.812 (std: 0.060)
+		Parameters: {'kernel': 'precomputed', 'C': 362.79909403538517}
+
+		Model with rank: 5
+		Mean validation score: 0.812 (std: 0.060)
+		Parameters: {'kernel': 'precomputed', 'C': 837.471134600453}

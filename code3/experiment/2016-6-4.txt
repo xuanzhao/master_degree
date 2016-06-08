@@ -17,8 +17,9 @@
 	QLSVM对C不敏感，且lambda值高的时候可以得到更为稀疏的核矩阵。
 
 
-5，实验结果： abalone(4177,8)，类1为9（689个），其他为0（3488个）， CV=5
-	1）RBF精度在cv测试中，精度最低，说明过拟合的很厉害
+5，实验结果： abalone(4177,8)，类1为9（689个），其他为0（3488个），
+			  CV(shuffle=True)=5
+	1）RBF
 		Model with rank: 1
 		Mean validation score: 0.835 (std: 0.000)
 		Parameters: {'kernel': 'rbf', 'C': 19.413964763749693, 'gamma': 0.030666795169844503}
@@ -39,45 +40,27 @@
 		Mean validation score: 0.835 (std: 0.000)
 		Parameters: {'kernel': 'rbf', 'C': 157.9257545063007, 'gamma': 0.0406788252230939}
 
-	2）Linear精度在cv测试中表现出了比RBF更好的泛化能力。
-		Model with rank: 1
-		Mean validation score: 0.776 (std: 0.039)
-		Parameters: {'kernel': 'linear', 'C': 309.4734325197795}
+	2）Linear
 
-		Model with rank: 2
-		Mean validation score: 0.776 (std: 0.039)
-		Parameters: {'kernel': 'linear', 'C': 306.00818822819423}
 
-		Model with rank: 3
-		Mean validation score: 0.776 (std: 0.039)
-		Parameters: {'kernel': 'linear', 'C': 321.82583744540017}
-
-		Model with rank: 4
-		Mean validation score: 0.776 (std: 0.039)
-		Parameters: {'kernel': 'linear', 'C': 322.42786630476974}
-
-		Model with rank: 5
-		Mean validation score: 0.776 (std: 0.039)
-		Parameters: {'kernel': 'linear', 'C': 320.62208005318297}
-
-	3）QLinear精度在cv测试中，最好，QL的好处是对C不敏感.
+	3）QLinear
 
 		Model with rank: 1
-		Mean validation score: 0.851 (std: 0.054)
-		Parameters: {'kernel': 'precomputed', 'C': 4448.849308865498}
+		Mean validation score: 0.835 (std: 0.000)
+		Parameters: {'kernel': 'rbf', 'C': 19.413964763749693, 'gamma': 0.030666795169844503}
 
 		Model with rank: 2
-		Mean validation score: 0.851 (std: 0.054)
-		Parameters: {'kernel': 'precomputed', 'C': 4468.16406747459}
+		Mean validation score: 0.835 (std: 0.000)
+		Parameters: {'kernel': 'rbf', 'C': 42.9914207351022, 'gamma': 0.0616468233484939}
 
 		Model with rank: 3
-		Mean validation score: 0.851 (std: 0.057)
-		Parameters: {'kernel': 'precomputed', 'C': 2467.5816193115597}
+		Mean validation score: 0.835 (std: 0.000)
+		Parameters: {'kernel': 'rbf', 'C': 1175.7763325051044, 'gamma': 0.008270469537776055}
 
 		Model with rank: 4
-		Mean validation score: 0.851 (std: 0.057)
-		Parameters: {'kernel': 'precomputed', 'C': 2562.1187119181527}
+		Mean validation score: 0.835 (std: 0.000)
+		Parameters: {'kernel': 'rbf', 'C': 211.79678622836192, 'gamma': 0.002143263678488726}
 
 		Model with rank: 5
-		Mean validation score: 0.851 (std: 0.057)
-		Parameters: {'kernel': 'precomputed', 'C': 2590.23651580767}
+		Mean validation score: 0.835 (std: 0.000)
+		Parameters: {'kernel': 'rbf', 'C': 157.9257545063007, 'gamma': 0.0406788252230939}

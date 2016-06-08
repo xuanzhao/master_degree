@@ -17,7 +17,8 @@
 	QLSVM对C不敏感，且lambda值高的时候可以得到更为稀疏的核矩阵。
 
 
-5，实验结果：glass(214,8),label=8,类1为1（70个），其他为0（144个）， CV=5
+5，实验结果：glass(214,8),label=8,类1为1（70个），其他为0（144个），
+			 CV(shuffle=True)=5
 	1）RBF精度在cv测试中，精度最低，说明过拟合的很厉害
 		Model with rank: 1
 		Mean validation score: 0.850 (std: 0.058)
