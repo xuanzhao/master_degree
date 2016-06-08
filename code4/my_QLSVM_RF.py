@@ -309,10 +309,10 @@ class treeNode(object):
                 get_R(self.rightChild)
             else:
                 RList.append(self.RInfo)
-                if self.leftChild.splitIndex !=None:
-                    get_R(self.leftChild)
-                if self.rightChild.splitIndex !=None:
-                    get_R(self.rightChild)
+                # if self.leftChild.splitIndex !=None:
+                #     get_R(self.leftChild)
+                # if self.rightChild.splitIndex !=None:
+                #     get_R(self.rightChild)
         get_R(self)
         return RList
 
