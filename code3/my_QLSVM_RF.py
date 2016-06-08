@@ -642,7 +642,7 @@ class QLSVM_clf_RF(object):
         for tree in trees:
 
             # get random features
-            feat_ind = np.random.choice(n, int(np.log2(n)+1), replace=False)
+            feat_ind = np.sort(np.random.choice(n, int(np.log2(n)+1), replace=False))
             # get data samples
             X_boot_train, y_boot_train = resample(X_train[:,feat_ind], y_train)
             

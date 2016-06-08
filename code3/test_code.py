@@ -96,15 +96,16 @@ plt.scatter(X_b[:, 0], X_b[:, 1], marker='o', c=Y_b)
 plt.figure(2)
 plt.scatter(X_nb[:, 0], X_nb[:, 1], marker='o', c=Y_nb)
 
-# ========================== training RF =====================================
+# ========================== RF_QLSVM =====================================
 start = time()
-myFore = my_DecTre_reg.RF_fit(X, Y, n_trees=200, 
-							  leafType='LogicReg', errType='lseErr_regul',
-							  max_depth=None, min_samples_split=3,
-							  max_features=.3)
+myFore = my_RF_QLSVM.RF_QLSVM_clf(n_trees=3, 
+                    leafType='LogicReg', errType='lseErr_regul',
+                    max_depth=None, min_samples_split=2,
+                    max_features='log2')
+myFore.fit(X,Y)
 end = time() - start
 
-y_pred = my_DecTre_reg.RF_predict(X_test, myFore)
+y_pred = myFore.RF_predict(X_test)
 
 print 'confusion_matrix :\n', metrics.confusion_matrix(y_test, y_pred)
 print 'precision :', metrics.precision_score(y_test, y_pred)
