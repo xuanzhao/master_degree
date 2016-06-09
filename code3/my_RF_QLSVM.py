@@ -602,7 +602,9 @@ class RF_QLSVM_clf(object):
                 errType='lseErr_regul',leafType='LogicReg',
                 max_depth=5, min_samples_split=10, max_features=None,
                 min_weight_fraction_leaf=0.0,
-                random_state=None, class_weight=None):
+                random_state=None, class_weight=None,
+                bootstrap_data=True,
+                bootstrap_features=True):
     
         self.n_trees = n_trees
         self.errType = errType
@@ -613,6 +615,8 @@ class RF_QLSVM_clf(object):
         self.max_features = max_features
         self.random_state = random_state
         self.class_weight = class_weight   
+        self.bootstrap_data = bootstrap_data
+        self.bootstrap_features = bootstrap_features
 
         # LEAFTYPE = {'SGDClf': SGDClf, 'LogicReg': LogicReg, 'RidgeReg': RidgeReg, 
                      # 'RANSACReg': RANSACReg, 'BayesReg': BayesReg,
@@ -643,23 +647,31 @@ class RF_QLSVM_clf(object):
         for tree in trees:
 
             # get random features index
-            feat_ind = np.sort(np.random.choice(n, int(np.log2(n)+1), replace=False))
+            if self.bootstrap_features:
+                feat_ind = np.sort(np.random.choice(n, int(np.sqrt(n)+1), replace=False))
+            else:
+                feat_ind = np.arange(n)
+
             # get data samples
-            X_boot_train, y_boot_train = resample(X_train[:,feat_ind], y_train)
+            if self.bootstrap_data:
+                X_boot_train, y_boot_train = resample(X_train[:,feat_ind], y_train)
+                # get oob data samples
+                boot_ind = np.in1d(X_train[:,0], X_boot_train[:,0])
+                X_oob_train = X_train[~boot_ind][:,feat_ind]
+                y_oob_train = y_train[~boot_ind]
+                tree.data_oob = np.c_[X_oob_train, y_oob_train]
+                tree.feat_ind = feat_ind
+                tree.fit(X_boot_train, y_boot_train)
+            else:
+                tree.fit(X_train, y_train)
 
-            # get oob data samples
-            boot_ind = np.in1d(X_train[:,0], X_boot_train[:,0])
-            X_oob_train = X_train[~boot_ind][:,feat_ind]
-            y_oob_train = y_train[~boot_ind]
-            tree.data_oob = np.c_[X_oob_train, y_oob_train]
             tree.feat_ind = feat_ind
-
-            tree.fit(X_boot_train, y_boot_train)
 
         self.trees = trees
         self.X_train = X_train
 
         return self  # type is list
+
 
     def RF_predict(self, X_test):
         predictions = []  # len=m

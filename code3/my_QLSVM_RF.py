@@ -450,7 +450,7 @@ class DecisionTreeRegresion(object):
                  min_weight_fraction_leaf=0.0,
                  max_features=None,
                  random_state=None,
-                 class_weight=None,
+                 class_weight=None
                  ):
     # LEAFTYPE = {'SGDClf': SGDClf, 'LogicReg': LogicReg, 'RidgeReg': RidgeReg, 
                  # 'RANSACReg': RANSACReg, 'BayesReg': BayesReg,
@@ -467,6 +467,7 @@ class DecisionTreeRegresion(object):
         self.max_features = max_features
         self.random_state = random_state
         self.class_weight = class_weight
+
 
     # decisionTree privite attributes, which is determinated by input data
         self.n_features = None
@@ -602,7 +603,9 @@ class QLSVM_clf_RF(object):
                 errType='lseErr_regul',leafType='LogicReg',
                 max_depth=5, min_samples_split=10, max_features=None,
                 min_weight_fraction_leaf=0.0,
-                random_state=None, class_weight=None):
+                random_state=None, class_weight=None,
+                bootstrap_data=True,
+                bootstrap_features=True):
     
         self.n_trees = n_trees
         self.errType = errType
@@ -613,7 +616,8 @@ class QLSVM_clf_RF(object):
         self.max_features = max_features
         self.random_state = random_state
         self.class_weight = class_weight    
-
+        self.bootstrap_data = bootstrap_data
+        self.bootstrap_features = bootstrap_features
 
     def fit(self, X_train, y_train):
         
@@ -622,6 +626,7 @@ class QLSVM_clf_RF(object):
                      # 'IsotonicReg': IsotonicReg, 'KernelRidge':KernelRidge
                      # }
         # ERRTYPE = {'lseErr': lseErr, 'lseErr_regul': lseErr_regul}
+
 
         from sklearn.utils import resample
         trees = []
@@ -642,18 +647,24 @@ class QLSVM_clf_RF(object):
         for tree in trees:
 
             # get random features
-            feat_ind = np.sort(np.random.choice(n, int(np.log2(n)+1), replace=False))
-            # get data samples
-            X_boot_train, y_boot_train = resample(X_train[:,feat_ind], y_train)
+            if self.bootstrap_features:
+                feat_ind = np.sort(np.random.choice(n, int(np.sqrt(n)+1), replace=False))
+            else:
+                feat_ind = np.arange(n)
             
-            # get oob data samples
-            boot_ind = np.in1d(X_train[:,0], X_boot_train[:,0])
-            X_oob_train = X_train[~boot_ind][:,feat_ind]
-            y_oob_train = y_train[~boot_ind]
-            data_oob_List.append(np.c_[X_oob_train, y_oob_train])
+            # get data samples
+            if self.bootstrap_data:
+                X_boot_train, y_boot_train = resample(X_train[:,feat_ind], y_train)
+                # get oob data samples
+                boot_ind = np.in1d(X_train[:,0], X_boot_train[:,0])
+                X_oob_train = X_train[~boot_ind][:,feat_ind]
+                y_oob_train = y_train[~boot_ind]
+                data_oob_List.append(np.c_[X_oob_train, y_oob_train])
+                tree.fit(X_boot_train, y_boot_train)
+            else:
+                tree.fit(X_train, y_train)
 
             tree.feat_ind = feat_ind
-            tree.fit(X_boot_train, y_boot_train)
 
         self.trees = trees
         self.data_oob_List = data_oob_List  # each element is a array
@@ -813,7 +824,7 @@ class QLSVM_clf_RF(object):
         #connect_graph = kneighbors_graph(RF_R_centers, n_neighbors=int(np.sqrt(len(trees)-1)), include_self=False)
         # connect_graph shape = (m,m) , if neibor then value=1, else=0
         #0.55*R_Mat.shape[0]
-        connect_graph = kneighbors_graph(R_centers, n_neighbors=int(np.log2(len(R_centers))), include_self=False)
+        connect_graph = kneighbors_graph(R_centers, n_neighbors=int(np.sqrt(len(R_centers))), include_self=False)
 
         try:
             R_cluster = AgglomerativeClustering(n_clusters=int(R_Mat.shape[0]*np.random.rand()*0.8)-5,
