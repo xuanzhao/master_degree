@@ -8,8 +8,8 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.cross_validation import train_test_split
 from sklearn import svm
 from __future__ import division
-import my_DecTre_clf
-import my_DecTre_reg
+import my_QLSVM_RF
+import my_RF_QLSVM
 import get_Quasi_linear_Kernel
 # ========================= generate data ============================
 

@@ -13,7 +13,7 @@ from sklearn.cross_validation import train_test_split
 from sklearn import svm
 from __future__ import division
 # import my_DecTre_clf
-import my_DecTre_reg
+import my_RF_QLSVM
 import my_QLSVM_RF
 import get_Quasi_linear_Kernel
 from sklearn.learning_curve import learning_curve
@@ -115,7 +115,7 @@ print 'f1_score :', metrics.f1_score(y_test, y_pred)
 # scores = cross_validation.cross_val_score(myFore,X,Y,cv=5)
 # print 'accuracy_score: %0.2f (+/-) %.2f' % (scores.mean(), scores.std()*2)
 
-RMat = np.array(myFore.get_RF_avgRList_byAggloCluster())
+RMat = np.array(myFore.get_RF_avgRList_byAggloCluster(0.9))
 RBFinfo = partial(get_Quasi_linear_Kernel.get_RBFinfo,RMat=RMat)
 Quasi_linear_kernel = partial(get_Quasi_linear_Kernel.get_KernelMatrix,RMat=RMat)
 

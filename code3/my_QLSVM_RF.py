@@ -648,7 +648,7 @@ class QLSVM_clf_RF(object):
 
             # get random features
             if self.bootstrap_features:
-                feat_ind = np.sort(np.random.choice(n, int(np.sqrt(n)+1), replace=False))
+                feat_ind = np.sort(np.random.choice(n, int(0.7*n), replace=False))
             else:
                 feat_ind = np.arange(n)
             
@@ -832,7 +832,7 @@ class QLSVM_clf_RF(object):
                                                 linkage='ward').fit(R_centers)
         except ValueError,e:
             print 'ValueError ',e
-            R_cluster = AgglomerativeClustering(n_clusters=int(np.log2(R_Mat.shape[0])),
+            R_cluster = AgglomerativeClustering(n_clusters=int(np.sqrt(R_Mat.shape[0])),
                                                 connectivity=connect_graph,
                                                 linkage='ward').fit(R_centers)
         #get_RF_avgRList(R_cluster):
