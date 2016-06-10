@@ -53,7 +53,7 @@ def lseErr(X, y, leafType):
         return 0.0
 
 
-def lseErr_regul(X, y, leafType, k=.5):
+def lseErr_regul(X, y, leafType, k=2):
     if len(np.unique(y)) != 1:
         model = leafType
         model.fit(X, y)
@@ -326,15 +326,18 @@ class treeNode(object):
 
         return depth
 
-    def getTreeStruc(self, indent=' '):
+    def getTreeStruc(self, indent='    '):
         if self.leftChild and self.rightChild:
             assert(len(indent) > 0)
             print indent + 'splitIndex [%d]<%f ' % (self.splitIndex, self.splitValue )
-            self.leftChild.getTreeStruc(indent + indent[0])
-            self.rightChild.getTreeStruc(indent + indent[0])
+            self.leftChild.getTreeStruc(indent + indent[:4])
+            self.rightChild.getTreeStruc(indent + indent[:4])
         else:
-            splitValue = ' '.join(map(str, self.splitValue.tolist()))
-            print indent + 'leaf node: ' + splitValue
+            splitValue = self.splitValue
+            if isinstance(splitValue, int):
+                print indent + 'leaf node: ', splitValue
+            else:
+                print indent + 'leaf node: ', splitValue.coef_
 
     def isTree(self, obj):
         return type(obj).__name__ == 'treeNode'
@@ -663,7 +666,7 @@ class QLSVM_clf_RF(object):
                 data_oob_List.append(np.c_[X_oob_train, y_oob_train])
                 tree.fit(X_boot_train, y_boot_train)
             else:
-                tree.fit(X_train, y_train)
+                tree.fit(X_train[:, feat_ind], y_train)
 
             tree.feat_ind = feat_ind
 
@@ -825,7 +828,7 @@ class QLSVM_clf_RF(object):
         #connect_graph = kneighbors_graph(RF_R_centers, n_neighbors=int(np.sqrt(len(trees)-1)), include_self=False)
         # connect_graph shape = (m,m) , if neibor then value=1, else=0
         #0.55*R_Mat.shape[0]
-        connect_graph = kneighbors_graph(R_centers, n_neighbors=int(np.sqrt(len(R_centers))), include_self=False)
+        connect_graph = kneighbors_graph(R_centers, n_neighbors=int(np.sqrt(len(R_centers))+1), include_self=False)
 
         try:
             R_cluster = AgglomerativeClustering(n_clusters=int(R_Mat.shape[0]*np.random.rand()*0.8)-5,

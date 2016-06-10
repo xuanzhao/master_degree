@@ -10,7 +10,7 @@ from sklearn.cross_validation import train_test_split
 from sklearn import svm
 from __future__ import division
 # import my_DecTre_clf
-import my_DecTre_reg
+import my_RF_QLSVM
 import my_QLSVM_RF
 import get_Quasi_linear_Kernel
 from sklearn.learning_curve import learning_curve
@@ -38,7 +38,7 @@ plt.scatter(X[:, 0], X[:, 1], marker='o', c=Y, cmap=plt.cm.Paired)
 
 plt.subplot(313)
 plt.title("Gaussian divided into three quantiles", fontsize='small')
-X, Y = make_gaussian_quantiles(n_samples=300,n_features=2, n_classes=2, 
+X, Y = make_gaussian_quantiles(n_samples=500,n_features=2, n_classes=2, 
 								mean=None,cov=1.0,random_state=13)
 plt.scatter(X[:, 0], X[:, 1], marker='o', c=Y)
 
@@ -78,7 +78,7 @@ x_max = X[:, 0].max()
 y_min = X[:, 1].min() 
 y_max = X[:, 1].max() 
 xx, yy = np.meshgrid(np.arange(x_min, x_max, plot_step), np.arange(y_min, y_max, plot_step))
-Z = clf.predict(np.c_[xx.ravel(), yy.ravel()])
+Z = myTree.predict(np.c_[xx.ravel(), yy.ravel()])
 Z = Z.reshape(xx.shape)
 plt.pcolormesh(xx,yy,Z, cmap=plt.cm.Paired)
 plt.imshow(Z, interpolation='nearest', cmap=plt.cm.PuOr_r)
@@ -90,14 +90,11 @@ contours = plt.contourf(xx,yy,Z, cmap=plt.cm.Paired)
 plt.scatter(RMat[:,0,0], RMat[:,0,1], marker='o', c=Y_nb)
 
 # ========================= training decision Tree ===========================
-myTree = my_DecTre_clf.DecisionTreeClassifier(max_depth=5)
-myTree.fit(X_train, y_train)
-
-myTree = my_DecTre_reg.DecisionTreeRegresion(leafType='LogicReg', 
+myTree = my_RF_QLSVM.DecisionTreeRegresion(leafType='LogicReg', 
 											 errType='lseErr_regul',
 											 max_depth=5,
 											 min_samples_split=3)
-myTree.fit(X_train, y_train)
+myTree.fit(X, Y)
 y_pred = myTree.predict(X_test)
 
 print 'confusion_matrix :\n', metrics.confusion_matrix(y_test, y_pred)
