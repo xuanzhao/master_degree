@@ -648,7 +648,8 @@ class QLSVM_clf_RF(object):
 
             # get random features
             if self.bootstrap_features:
-                feat_ind = np.sort(np.random.choice(n, int(0.7*n), replace=False))
+                feat_ind = np.random.choice(n, int(0.7*n), replace=False)
+                feat_ind.sort()
             else:
                 feat_ind = np.arange(n)
             
