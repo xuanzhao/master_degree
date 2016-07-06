@@ -13,7 +13,7 @@ from sklearn.cross_validation import train_test_split
 from sklearn import svm
 from __future__ import division
 # import my_DecTre_clf
-import my_RF_QLSVM
+import my_DecTre_reg
 import my_QLSVM_RF
 import get_Quasi_linear_Kernel
 from sklearn.learning_curve import learning_curve
@@ -55,18 +55,6 @@ Y  = np.where(Y==1, 1, 0)
 data = fetch_mldata('glass')
 X = data['data'] ; Y = data['target']
 Y  = np.where(Y==1, 1, 0)
-
-data = scipy.io.loadmat('yeast.mat')
-X_train = data['X1'] ; y_train = data['Ytrain']
-X_test = data['Xt']; y_test = data['Ytest']
-
-import pandas as pd
-data = pd.read_table('yeast.txt', delim_whitespace=True, header=None)
-data = np.array(data.ix[:,1:])
-X = data[:,:-1] ; Y = np.where(data[:,-1]=='MIT', 1, 0)
-
-
-
 
 # ========================== standardize data ===========================
 from sklearn.preprocessing import StandardScaler

@@ -88,8 +88,9 @@ plt.contour(xx, yy, Z, colors=['k', 'k', 'k'], linestyles=['--', '-', '--'],
 contours = plt.contourf(xx,yy,Z, cmap=plt.cm.Paired)
 
 #==========================plot RList point =================================
-plt.scatter(RMat[:,0,0], RMat[:,0,1], marker='o', c=Y_nb)
+plt.scatter(RMat[:,0,0], RMat[:,1,0], marker='o', c=Y_nb)
 
+scatter(X[:,0],X[:,1], c=Y)
 # ========================= training decision Tree ===========================
 myTree = my_RF_QLSVM.DecisionTreeRegresion(leafType='LogicReg', 
 											 errType='lseErr_regul',

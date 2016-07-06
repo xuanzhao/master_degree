@@ -26,11 +26,11 @@ from sklearn.metrics import classification_report
 
 #======================== make sin data ===================================
 rng = np.random.RandomState(1)
-X = np.sort(5 * rng.rand(160, 1), axis=0)
+X = np.sort(10 * rng.rand(200, 1), axis=0)
 y1 = np.sin(X).ravel() + .25
 y2 = np.sin(X).ravel() - .25
-y1[::4] += 1 * (0.5 - rng.rand(40))
-y2[::4] -= 1 * (0.5 - rng.rand(40))
+y1[::5] += 1 * (0.5 - rng.rand(40))
+y2[::5] -= 1 * (0.5 - rng.rand(40))
 y1 = y1[:, np.newaxis]
 y2 = y2[:, np.newaxis]
 
@@ -53,12 +53,21 @@ Y = Y[idx]
 fig = plt.figure()
 plt.style.use('ggplot')
 ax = fig.add_subplot(111)
-ax.axis('tight')
 pos = ax.scatter(X1[:,0], X1[:,1], c='red')
 neg = ax.scatter(X2[:,0], X2[:,1], c='blue')
-#scatter(X[:,0], X[:,1], c=Y)
-legend([pos, neg], ['positive sample', 'negative sample'])
+ax.scatter(X[:,0], X[:,1], c=Y)
+ax.axis('tight')
+#legend([pos, neg], ['positive sample', 'negative sample'])
 
+#========================= make gaussian data ==============================
+plt.title("Gaussian divided into three quantiles", fontsize='small')
+X, Y = make_gaussian_quantiles(n_samples=500,n_features=2, n_classes=2, 
+								mean=None,cov=1.0,random_state=13)
+
+fig = plt.figure()
+plt.style.use('ggplot')
+ax = fig.add_subplot(111)
+ax.scatter(X[:, 0], X[:, 1], marker='o', c=Y)
 
 #========================= training decision tree ==========================
 
@@ -73,6 +82,7 @@ myTree.tree.getTreeStruc()
 
 # ========== decision tree training and testingquasi_linear SVM ==========
 RMat = np.array(myTree.tree.get_RList())
+RMat = np.array(myFore.trees[0].tree.get_RList())
 from functools import partial
 RBFinfo = partial(get_Quasi_linear_Kernel.get_RBFinfo,RMat=RMat)
 Quasi_linear_kernel = partial(get_Quasi_linear_Kernel.get_KernelMatrix,RMat=RMat)
@@ -82,7 +92,7 @@ clf.fit(X, Y)
 
 
 #========================== plot data face ================================
-plot_step = 0.1
+plot_step = 0.01
 x_min = X[:, 0].min() 
 x_max = X[:, 0].max() 
 y_min = X[:, 1].min() 
@@ -99,9 +109,17 @@ Z_svm = clf.predict(np.c_[xx.ravel(), yy.ravel()])
 Z_svm = Z_svm.reshape(xx.shape)
 contours = plt.contourf(xx,yy,Z_svm, cmap=plt.cm.Paired)
 
+# another way to pass the kernel matrix
+K_train = Quasi_linear_kernel(X,X)
+K_test = Quasi_linear_kernel(np.c_[xx.ravel(), yy.ravel()],X)
+clf = svm.SVC(kernel='precomputed')
+clf.fit(K_train, Y)
+Z = clf.predict(K_test)
+plt.pcolormesh(xx,yy,Z, cmap=plt.cm.Paired)
+#y_pred = clf.predict(K_test)
 
 #==========================plot RList point =================================
-kernel = scatter(RMat[:,0,0], RMat[:,0,1], marker='o', c='y', s=80, label='kernel data')
+kernel = ax.scatter(RMat[:,0,0], RMat[:,1,0], marker='o', c='y', s=80, label='kernel data')
 legend([pos, neg, kernel], ['positive sample', 'negative sample', 'kernel data'])
 
 
@@ -110,7 +128,7 @@ myFore = my_RF_QLSVM.RF_QLSVM_clf( n_trees=3,
 							  leafType='LogicReg', errType='lseErr_regul',
 							  max_depth=5, min_samples_split=3,
 							  max_features=None,
-							  bootstrap_data=False, bootstrap_features=False)
+							  bootstrap_data=True)
 myFore.fit(X, Y)
 # =============== RF training and testing quasi_linear SVM ==============
 RMat = np.array(myFore.get_RF_avgRList_byAggloCluster(0.8))
@@ -120,7 +138,6 @@ Quasi_linear_kernel = partial(get_Quasi_linear_Kernel.get_KernelMatrix,RMat=RMat
 
 clf = svm.SVC(kernel=Quasi_linear_kernel)
 clf.fit(X, Y)
-
 
 
 

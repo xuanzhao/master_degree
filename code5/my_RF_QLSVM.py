@@ -11,7 +11,7 @@ from sklearn.neighbors import NearestNeighbors
 # common function
 # ===============================================
 
-SGDClf = linear_model.SGDClassifier(loss='modified_huber',penalty='l1')
+SGDClf = linear_model.SGDClassifier(loss='modified_huber',penalty='l1',alpha=0.01)
 
 LogicReg = linear_model.LogisticRegression(penalty='l1', C=1.0)
 
@@ -28,7 +28,8 @@ IsotonicReg = IsotonicRegression(y_min=None, y_max=None, increasing=True,
                                  out_of_bounds='nan')
 
 
-def lseErr(X, y, leafType):
+def lseErr(dataMat, leafType):
+    X = dataMat[:,:-1]; y = dataMat[:, -1]
 
     if len(np.unique(y)) != 1:
         model = leafType
@@ -52,7 +53,9 @@ def lseErr(X, y, leafType):
         return 0.0
 
 
-def lseErr_regul(X, y, leafType, k=1):
+def lseErr_regul( dataMat, leafType, k=2):
+    X = dataMat[:,:-1]; y = dataMat[:, -1]
+
     if len(np.unique(y)) != 1:
         model = leafType
         model.fit(X, y)
@@ -68,21 +71,18 @@ def lseErr_regul(X, y, leafType, k=1):
         
         X1_mean = np.mean(X[y==1], axis=0)
         X0_mean = np.mean(X[y==0], axis=0)
-
         X1_delta = X[y==1] - X0_mean # (m,n)
-        X0_delta = X[y==0] - X1_mean
+        X0_delta = X[y==0] - X1_mean        
 
-        #X1_delta = X[y==1] - X1_mean # (m,n)
-        #X0_delta = X[y==0] - X0_mean
+        # X1_delta = X[y==1] - X1_mean # (m,n)
+        # X0_delta = X[y==0] - X0_mean
         X_delta = np.r_[X1_delta, X0_delta]
         
         #X_delta = X - np.mean(X, axis=0)
-
+        
         error = (np.sum(np.power(y[:,np.newaxis] - yHat, 2))  + \
                 k * np.sum(np.power(X_delta, 2)) ) /len(yHat)
 
-        #yHat = model.predict_log_proba(X)
-        #error = metrics.log_loss(y, yHat)
         return error
     else:
         X_mean = np.mean(X,axis=0)
@@ -145,18 +145,16 @@ def bagForFeatures(max_features, n_features):
         return np.arange(n_features)
     elif isinstance(max_features, int):
         if max_features < n_features:
-            return np.sort(np.random.choice(n_features, max_features, replace=False))
-        else:
-            print 'the max_features > data features' 
-            return np.arange(n_feautres)
+            return np.random.choice(n_features, max_features, replace=False)
+        else: return np.arange(n_feautres)
     elif isinstance(max_features, float):
         if max_features < 1.0:
-            return np.sort(np.random.choice(n_features, int(max_features*n_features), replace=False))
+            return np.random.choice(n_features, int(max_features*n_features), replace=False)
         else: return n_features
     elif max_features == 'sqrt':
-        return np.sort(np.random.choice(n_features, int(np.sqrt(n_features))))
+        return np.random.choice(n_features, int(np.sqrt(n_features)))
     elif max_features == 'log2':
-        return np.sort(np.random.choice(n_features, int(np.log2(n_features))))
+        return np.random.choice(n_features, int(np.log2(n_features)))
 
 # ================================================
 # Types and constants
@@ -179,8 +177,8 @@ class treeNode(object):
         self.parent = parent
         self.leftChild = None
         self.rightChild = None
-        self.splitIndex = None
-        self.splitValue = None  # if it is leafNode, splitValue = weights
+        self.splitIndexes = None
+        self.splitWeights = None  # if it is leafNode, splitValue = weights
         self.n_samples = 0
         self.n_features = 0
         self.RInfo = None
@@ -189,10 +187,10 @@ class treeNode(object):
 
     def binSplitData(self, dataMat, featIdx, featVal):
 
-        ind = dataMat[:, featIdx] <= featVal
-        leftMat = dataMat[ind,:]
-        rightMat = dataMat[np.logical_not(ind), :]
-
+        data_ind = np.dot(dataMat[:,featIdx], featVal.T) # (m,n`) * (n`,1) = (m,1)
+        ind = data_ind[:]<=0
+        leftMat = dataMat[ind.flatten(),:]
+        rightMat = dataMat[~ind.flatten(),:]
         return leftMat, rightMat
 
 
@@ -200,71 +198,70 @@ class treeNode(object):
                         min_samples_split, min_weight_fraction_leaf,
                         class_weight, max_features, n_features):
 
+        import itertools
+        X = dataMat[:,:-1]
+        y = dataMat[:,-1]
 
         # all data is same class
-        yHat = dataMat[:,-1]
-        if len(np.unique(yHat)) == 1:
+        if len(np.unique(y)) == 1:
             #print 'before return leafType, let me check the value\n'
-            # print '---------------------------------------------------\n'
-            # print 'here all data is same class '
-            # print 'the leafType return (class label)', int(np.unique(yHat))
-            # print '---------------------------------------------------\n'
-            return None, int(np.unique(yHat))
+            print 'here all data is same class :', int(np.unique(y))
+            return None, int(np.unique(y))
         # fit the max_depth
         if max_depth != None:
             if self.selfDepth > max_depth:
                 #print 'before return leafType, let me check the value\n'
-                # print '---------------------------------------------------\n'
-                # print 'here fit the max_depth:', self.selfDepth
-                # print 'the leafType return model'
-                # print '---------------------------------------------------\n'
-                return None, leafType.fit(dataMat[:,:-1],dataMat[:,-1])
+                print 'here fit the max_depth:', self.selfDepth
+                print 'the leafType return model :'
+                return None, leafType.fit(X,y)
 
         # get the feature index for split
         featIndexes = bagForFeatures(max_features, n_features)
-        bestError = np.inf; bestIndex = 0; bestValue = 0
+        featIndexes.sort()
+        
+        # try all combinations of featIndexes
+        bestError = np.inf 
+        bestSplitIndexes = featIndexes
+        bestSplitWeights = np.zeros_like(featIndexes)
 
-        for featIndex in featIndexes:
-            featVal = np.unique(dataMat[:, featIndex])
-            for splitVal in np.random.choice(featVal, .7*len(featVal)):
-                leftMat, rightMat = self.binSplitData(dataMat, featIndex, splitVal)
+        # for featIndex in featIndexes:
+        #     for splitVal in np.unique(dataMat[:,featIndex]):
+        for i in range(2,len(featIndexes)+1):
+            l = itertools.combinations(featIndexes, i)
+            # fit the dataMat
+            for featInd in l:
+
+                model = leafType
+                model.fit(X[:,featInd], y)
+                newSplitWeights = model.coef_  # shape is (1, n)
+                leftMat, rightMat = self.binSplitData(dataMat, featInd, newSplitWeights) 
+
+                # oneside fit the min_samples_split
                 if (leftMat.shape[0] < min_samples_split) or \
                     (rightMat.shape[0] < min_samples_split): 
-                    # print 'fit oneside less than min_samples_split'
-                    # print 'not split at current, do countinue...'
+                    print 'oneside fit the min_samples_split'
+                    print 'the leftMat class is', leftMat[:,-1]
+                    print 'the rightMat class is', rightMat[:,-1]
                     continue
-                newError = errType(leftMat[:, :-1],leftMat[:, -1], leafType) + \
-                           errType(rightMat[:, :-1], rightMat[:, -1], leafType)
-
+                
+                newError = errType(leftMat, leafType) + \
+                           errType(rightMat, leafType)
                 if newError < bestError:
-                    bestIndex = featIndex
-                    bestValue = splitVal
+                    bestSplitIndexes = np.array(featInd)
+                    bestSplitWeights = newSplitWeights
                     bestError = newError
-                #print '-----------------iteration-----------------------\n'
-                #print 'featIndex : ',featIndex, 'FeatValue :', splitVal
-                #print 'newError  : ',newError, 'bestError : ', bestError
-                #print '-------------------------------------------------\n'
 
         # fit the min_samples_split
-        leftMat, rightMat = self.binSplitData(dataMat, bestIndex, bestValue)
+        leftMat, rightMat = self.binSplitData(dataMat, bestSplitIndexes, bestSplitWeights)
         if (leftMat.shape[0] < min_samples_split) or \
             (rightMat.shape[0] < min_samples_split):
-           #print 'before return leafType, let me check the value\n'
-            # print '---------------------------------------------------\n'
-            # print 'here fit oneside less than the min_samples_split :'
-            # print 'the total number of sample is ', self.n_samples
-            # print 'the leafType return model'
-            # print '---------------------------------------------------\n'
-            return None, leafType.fit(dataMat[:,:-1],dataMat[:,-1])
+            print 'fit the min_samples_split, return model'
+            print 'this data class distribute is ', y
+            return None, leafType.fit(X, y)
 
-        # print '************ find bestSplit do return ***************\n'
-        # print 'bestIndex : ',bestIndex, 'bestValue :', bestValue
-        # print 'bestError : ', bestError
-        # print '---------------------------------------------------\n'
-        
-        #raw_input('let me see see first')
+        print 'find bestSplitIndexes with it weights'
+        return bestSplitIndexes, bestSplitWeights
 
-        return bestIndex, bestValue
 
     def createTree(self, dataMat, leafType, errType, max_depth,
                    min_samples_split, min_weight_fraction_leaf,
@@ -277,22 +274,24 @@ class treeNode(object):
                         class_weight, max_features, self.n_features)
         self.dataMat = dataMat
         if featId == None: 
-            self.splitIndex = None
-            self.splitValue = featVal # leaf node featVal is weights
-            #self.parent.RInfo = self.parent.calc_R(self.parent.dataMat)
-            self.RInfo = self.calc_R(self.dataMat)
+            self.splitIndexes = None
+            self.splitWeights = featVal # leaf node featVal is model or int
+            self.parent.RInfo = self.parent.calc_R(self.parent.dataMat)
+            print 'self.splitWeights is ', self.splitWeights
+            if not isinstance(self.splitWeights, int):
+                self.RInfo = self.calc_R(self.dataMat)
+                print 'self.RInfo calculated', self.RInfo
         else:
-            self.splitIndex = featId
-            self.splitValue = featVal
+            self.splitIndexes = featId
+            self.splitWeights = featVal
             #print '-------------------- get BestSplit --------------\n'
-            #print 'self.splitIndex :', self.splitIndex, 'self.splitValue : ', self.splitValue
+            #print 'self.splitIndexes :', self.splitIndexes, 'self.splitValue : ', self.splitValue
             #print '-------------------------------------------------\n'
             leftMat, rightMat = self.binSplitData(dataMat, featId, featVal)
             #print '------------- after one split ----------------------\n'
             #print 'leftMat shape  :', leftMat.shape, 'mat samples :\n', leftMat[:3,:]
             #print 'rightMat shape :', rightMat.shape, 'mat samples :\n',rightMat[:3,:]
             #print '---------------------------------------------------\n'
-
            
             self.leftChild = treeNode(self)
             self.rightChild = treeNode(self)
@@ -300,7 +299,7 @@ class treeNode(object):
             #print "self.parent     :", self.parent
             #print "self.leftChild  :", self.leftChild
             #print 'self.rightChild :', self.rightChild
-            #print 'self.splitIndex :', self.splitIndex
+            #print 'self.splitIndexes :', self.splitIndexes
             #print 'self.splitValue :', self.splitValue
             #print 'self.n_samples  :', self.n_samples
             #print 'self.n_features :', self.n_features
@@ -329,15 +328,20 @@ class treeNode(object):
 
         RList = []
         def get_R(self):
-            if self.RInfo == None:
-                if self.isTree(self.leftChild):
+            if self.RInfo != None:
+                RList.append(self.RInfo)
+                if self.leftChild or self.rightChild != None:
                     get_R(self.leftChild)
                     get_R(self.rightChild)
             else:
-                RList.append(self.RInfo)
-                if self.isTree(self.leftChild):
+                # if self.leftChild.splitIndexes !=None:
+                # get_R(self.leftChild)
+                # if self.rightChild.splitIndexes !=None:
+                # get_R(self.rightChild)
+                if self.leftChild or self.rightChild != None:
                     get_R(self.leftChild)
                     get_R(self.rightChild)
+
         get_R(self)
         return RList
 
@@ -354,11 +358,12 @@ class treeNode(object):
     def getTreeStruc(self, indent='    '):
         if self.leftChild and self.rightChild:
             assert(len(indent) > 0)
-            print indent + 'splitIndex [%d]<%f ' % (self.splitIndex, self.splitValue )
+            print indent + 'splitIndexes :', self.splitIndexes \
+                            , 'splitWeights :',self.splitWeights
             self.leftChild.getTreeStruc(indent + indent[:4])
             self.rightChild.getTreeStruc(indent + indent[:4])
         else:
-            splitValue = self.splitValue
+            splitValue = self.splitWeights
             if isinstance(splitValue, int):
                 print indent + 'leaf node: ', splitValue
             else:
@@ -372,16 +377,17 @@ class treeNode(object):
 
     def treeForeCast(self, x_test, leafType):
 
-        if self.splitIndex==None:
+        if self.splitIndexes==None:
             x_test = x_test.reshape(1,-1)  # (1,n)
-            if isinstance(self.splitValue, int):
-                prediction = self.splitValue
+            if isinstance(self.splitWeights, int):
+                prediction = self.splitWeights
             else:
-                prediction = self.splitValue.predict(x_test)
+                prediction = self.splitWeights.predict(x_test)
                 prediction = (1 if prediction > 0.5 else 0)
             return prediction
 
-        if x_test[:,self.splitIndex] < self.splitValue :
+        
+        if np.dot(x_test[:,self.splitIndexes], self.splitWeights.T) <= 0:
             if self.isTree(self.leftChild):
                 return self.leftChild.treeForeCast(x_test, leafType) 
         else:
@@ -634,7 +640,8 @@ class RF_QLSVM_clf(object):
                 max_depth=5, min_samples_split=10, max_features=None,
                 min_weight_fraction_leaf=0.0,
                 random_state=None, class_weight=None,
-                bootstrap_data=True):
+                bootstrap_data=True,
+                bootstrap_features=True):
     
         self.n_trees = n_trees
         self.errType = errType
@@ -646,6 +653,7 @@ class RF_QLSVM_clf(object):
         self.random_state = random_state
         self.class_weight = class_weight   
         self.bootstrap_data = bootstrap_data
+        self.bootstrap_features = bootstrap_features
 
         # LEAFTYPE = {'SGDClf': SGDClf, 'LogicReg': LogicReg, 'RidgeReg': RidgeReg, 
                      # 'RANSACReg': RANSACReg, 'BayesReg': BayesReg,
@@ -674,17 +682,28 @@ class RF_QLSVM_clf(object):
         m,n = X_train.shape
 
         for tree in trees:
+
+            # get random features index
+            if self.bootstrap_features:
+                feat_ind = np.random.choice(n, int(0.7*n), replace=False)
+                feat_ind.sort()
+            else:
+                feat_ind = np.arange(n)
+
             # get data samples
             if self.bootstrap_data:
-                X_boot_train, y_boot_train = resample(X_train, y_train)
+                X_boot_train, y_boot_train = resample(X_train[:,feat_ind], y_train)
                 # get oob data samples
                 boot_ind = np.in1d(X_train[:,0], X_boot_train[:,0])
-                X_oob_train = X_train[~boot_ind]
+                X_oob_train = X_train[~boot_ind][:,feat_ind]
                 y_oob_train = y_train[~boot_ind]
                 tree.data_oob = np.c_[X_oob_train, y_oob_train]
+                tree.feat_ind = feat_ind
                 tree.fit(X_boot_train, y_boot_train)
             else:
-                tree.fit(X_train, y_train)
+                tree.fit(X_train[:,feat_ind], y_train)
+
+            tree.feat_ind = feat_ind
 
         self.trees = trees
         self.X_train = X_train
@@ -721,9 +740,9 @@ class RF_QLSVM_clf(object):
 
             tree_RList = tree.tree.get_RList()
             tree_RMat = np.array(tree_RList)
-            # tree_new_RMat = np.zeros((tree_RMat.shape[0],n,2))
-            # tree_new_RMat[:,tree.feat_ind] = tree_RMat
-            RF_RList.extend(tree_RMat)   # len = m
+            tree_new_RMat = np.zeros((tree_RMat.shape[0],n,2))
+            tree_new_RMat[:,tree.feat_ind] = tree_RMat
+            RF_RList.extend(tree_new_RMat)   # len = m
 
         RF_R_Mat = np.array(RF_RList)  #(m,n,2), col0=center, col1=radius
         RF_R_centers = RF_R_Mat[:,:,0]  # (m,n)
