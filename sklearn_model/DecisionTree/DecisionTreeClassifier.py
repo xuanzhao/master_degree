@@ -19,10 +19,10 @@ iris.target = iris.target[perm]
 
 # Split into training and testing sets
 skf = cross_validation.StratifiedKFold(iris.target,  n_folds=3)
-
-cross_validation.cross_val_score(clf, X, Y, cv=skf, scoring='f1_weighted')
-cross_validation.cross_val_score(clf, X, Y, cv=skf, scoring='accuracy')
-cross_validation.cross_val_score(clf, X, Y, cv=skf, scoring='recall')
+clf = DecisionTreeClassifier(max_depth=3, min_samples_split=2)
+print 'f1_score :', cross_validation.cross_val_score(clf, X, Y, cv=skf, scoring='f1_weighted')
+print 'accuracy score :',cross_validation.cross_val_score(clf, X, Y, cv=skf, scoring='accuracy')
+print 'recall score :',cross_validation.cross_val_score(clf, X, Y, cv=skf, scoring='recall')
 
 for train_index, test_index in skf:
 	X_train, X_test = iris.data[train_index], iris.data[test_index]

@@ -24,23 +24,15 @@ def get_RBFinfo(X, RMat, lamb=2):
 	return New_R_std    # (m,k)
 
 def get_KernelMatrix(X_test, X_train, RMat):
-
 	# Construct the semi-positive definite kernel matrix ,size is (m,m)
-	T = (X_test is X_train)
 	X_train = np.mat(X_train)   # (m_d,n)
 	X_test  = np.mat(X_test)	# (m_t,n)
 
-   	if T:
-   		print 'create train_kernel matrix...'
-   		R_train = get_RBFinfo(X_train, RMat)   # (m_d, k)
-		R_train = np.mat(R_train)
-		R_test = np.mat(R_train)
-	else:
-		print 'create test_kernel matrix...'
-		R_train = get_RBFinfo(X_train, RMat)   # (m_d, k)
-		R_train = np.mat(R_train)
-		R_test = get_RBFinfo(X_test, RMat) 	   # (m_t, k)
-		R_test  = np.mat(R_test)
+   
+	R_train = get_RBFinfo(X_train, RMat)   # (m_d, k)
+	R_train = np.mat(R_train)
+	R_test = get_RBFinfo(X_test, RMat) 	   # (m_t, k)
+	R_test  = np.mat(R_test)
 
 	# for the train_kernel, the matrix size is (m_d,m_d)
 	# (m_d,n)*(n,m_d) = (m_d,m_d) ----> X_train
@@ -51,8 +43,6 @@ def get_KernelMatrix(X_test, X_train, RMat):
 	# (m_t,k) * (k,m_d) = (m_t,m_d) ----> R_test
 	K = np.multiply((1+ X_test*X_train.T),(R_test*R_train.T))
 
-	# from sklearn.preprocessing import KernelCenterer
-	# K_std = KernelCenterer().fit_transform(K)
 	print 'down get kernelMatrix, the shape is', K.shape
 
 	return K

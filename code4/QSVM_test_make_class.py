@@ -8,8 +8,8 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.cross_validation import train_test_split
 from sklearn import svm
 from __future__ import division
-import my_DecTre_clf
-import my_DecTre_reg
+import my_QLSVM_RF
+import my_RF_QLSVM
 import get_Quasi_linear_Kernel
 # ========================= generate data ============================
 
@@ -21,7 +21,7 @@ plt.scatter(X[:, 0], X[:, 1], marker='o', c=Y)
 
 plt.subplot(312)
 plt.title("Two informative features, one cluster per class", fontsize='small')
-X, Y = make_classification(n_samples=300,n_features=3, n_redundant=0, n_informative=3,
+X, Y = make_classification(n_samples=500,n_features=6, n_redundant=0, n_informative=6,
                              n_clusters_per_class=2,random_state=13)
 plt.scatter(X[:, 0], X[:, 1], marker='o', c=Y, cmap=plt.cm.Paired)
 
@@ -72,7 +72,7 @@ print 'precision_score :', metrics.precision_score(y_test, y_pred)
 print 'f1_score :', metrics.f1_score(y_test, y_pred)
 
 # ========================== training RF =====================================
-myFore = my_DecTre_reg.RF_fit(X_train, y_train, n_trees=3, max_depth=5)
+myFore = my_DecTre_reg.RF_fit(X, Y, n_trees=10, max_depth=None,min_samples_split=2)
 y_pred = my_DecTre_reg.RF_predict(X_test, myFore)
 
 print 'confusion_matrix :\n', metrics.confusion_matrix(y_test, y_pred)

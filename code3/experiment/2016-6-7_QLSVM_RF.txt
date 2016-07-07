@@ -1,0 +1,107 @@
+6-7 experiment recode
+
+data = 'sonar'
+
+
+
+
+#==================== QLSVM_clf_RF ========================================
+
+#########without RList connectivity graph
+
+myFore = my_QLSVM_RF.QLSVM_clf_RF(n_trees=200, 
+                    leafType='LogicReg', errType='lseErr_regul',
+                    max_depth=None, min_samples_split=2,
+                    max_features='log2')
+					
+					
+					
+skf = cross_validation.StratifiedKFold(Y, n_folds=3,
+                                      shuffle=False,random_state=13)
+f1_score
+Out[73]: [0.60606060606060608, 0.69333333333333336, 0.53731343283582089]
+
+precision_score
+Out[74]: [0.60606060606060608, 0.60465116279069764, 0.51428571428571423]
+
+recall_score
+Out[75]: [0.60606060606060608, 0.8125, 0.5625]
+
+f1_score
+Out[95]: [0.57894736842105265, 0.63291139240506322, 0.54545454545454553]
+
+precision_score
+Out[96]: [0.51162790697674421, 0.53191489361702127, 0.52941176470588236]
+
+recall_score
+Out[97]: [0.66666666666666663, 0.78125, 0.5625]
+
+
+skf = cross_validation.StratifiedKFold(Y, n_folds=3,
+                                      shuffle=True,random_state=13)
+f1_score
+Out[91]: [0.88135593220338981, 0.81818181818181823, 0.73076923076923084]
+
+precision_score
+Out[92]: [1.0, 0.79411764705882348, 0.94999999999999996]
+
+recall_score
+Out[93]: [0.78787878787878785, 0.84375, 0.59375]
+
+
+#########have RList connectivity graph
+
+myFore = my_RF_QLSVM.RF_QLSVM_clf(n_trees=200, 
+                    leafType='LogicReg', errType='lseErr_regul',
+                    max_depth=None, min_samples_split=2,
+                    max_features='log2')	
+
+
+
+
+
+#====================RF_QLSVM_clf ======================================
+
+########### get RInfo at parentNode of leafNode
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+########## get RInfo at leafNode					
+myFore = my_RF_QLSVM.RF_QLSVM_clf(n_trees=500, 
+                    leafType='LogicReg', errType='lseErr_regul',
+                    max_depth=None, min_samples_split=2,
+                    max_features='log2')
+					
+skf = cross_validation.StratifiedKFold(Y, n_folds=3,
+                                      shuffle=False,random_state=13)					
+					
+Model with rank: 1
+Mean validation score: 0.654 (std: 0.063)
+Parameters: {'kernel': 'precomputed', 'C': 17.126028903361565}
+
+Model with rank: 2
+Mean validation score: 0.639 (std: 0.082)
+Parameters: {'kernel': 'precomputed', 'C': 1902.8896794270704}
+
+Model with rank: 3
+Mean validation score: 0.639 (std: 0.082)
+Parameters: {'kernel': 'precomputed', 'C': 156.5929460453727}
+
+Model with rank: 4
+Mean validation score: 0.639 (std: 0.082)
+Parameters: {'kernel': 'precomputed', 'C': 356.2066204592617}
+
+Model with rank: 5
+Mean validation score: 0.639 (std: 0.082)
+Parameters: {'kernel': 'precomputed', 'C': 717.5281100045702}

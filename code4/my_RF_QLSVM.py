@@ -7,7 +7,6 @@ from sklearn.kernel_ridge import KernelRidge
 from sklearn.isotonic import IsotonicRegression
 from sklearn import metrics
 from sklearn.neighbors import NearestNeighbors
-from sklearn.metrics import precision_recall_fscore_support as score
 # ===============================================
 # common function
 # ===============================================
@@ -53,7 +52,7 @@ def lseErr(X, y, leafType):
         return 0.0
 
 
-def lseErr_regul(X, y, leafType, k=2):
+def lseErr_regul(X, y, leafType, k=0.5):
     if len(np.unique(y)) != 1:
         model = leafType
         model.fit(X, y)
@@ -79,17 +78,13 @@ def lseErr_regul(X, y, leafType, k=2):
         
         #X_delta = X - np.mean(X, axis=0)
         error = (np.sum(np.power(y[:,np.newaxis] - yHat, 2))  + \
-                k * np.sum(np.power(X_delta, 2)) ) / len(yHat)
+                k * np.sum(np.power(X_delta, 2)) ) /len(yHat)
 
         #yHat = model.predict_log_proba(X)
         #error = metrics.log_loss(y, yHat)
         return error
     else:
-        X_mean = np.mean(X,axis=0)
-        X_delta = X - X_mean
-        error = k * np.sum(np.power(X_delta, 2)) / len(X_delta)
-        return error
-        
+        return 0.0
 # def get_RList(tree):
 
 #     RList = []
@@ -184,6 +179,7 @@ class treeNode(object):
         self.n_samples = 0
         self.n_features = 0
         self.RInfo = None
+        self.dataMat = None
 
 
     def binSplitData(self, dataMat, featIdx, featVal):
@@ -199,24 +195,23 @@ class treeNode(object):
                         min_samples_split, min_weight_fraction_leaf,
                         class_weight, max_features, n_features):
 
-
         # all data is same class
         yHat = dataMat[:,-1]
         if len(np.unique(yHat)) == 1:
             #print 'before return leafType, let me check the value\n'
-            # print '---------------------------------------------------\n'
-            # print 'here all data is same class '
-            # print 'the leafType return (class label)', int(np.unique(yHat))
-            # print '---------------------------------------------------\n'
+            print '---------------------------------------------------\n'
+            print 'here all data is same class '
+            print 'the leafType return (class label)', int(np.unique(yHat))
+            print '---------------------------------------------------\n'
             return None, int(np.unique(yHat))
         # fit the max_depth
         if max_depth != None:
             if self.selfDepth > max_depth:
                 #print 'before return leafType, let me check the value\n'
-                # print '---------------------------------------------------\n'
-                # print 'here fit the max_depth:', self.selfDepth
-                # print 'the leafType return model'
-                # print '---------------------------------------------------\n'
+                print '---------------------------------------------------\n'
+                print 'here fit the max_depth:', self.selfDepth
+                print 'the leafType return model'
+                print '---------------------------------------------------\n'
                 return None, leafType.fit(dataMat[:,:-1],dataMat[:,-1])
 
         # get the feature index for split
@@ -249,17 +244,17 @@ class treeNode(object):
         if (leftMat.shape[0] < min_samples_split) or \
             (rightMat.shape[0] < min_samples_split):
            #print 'before return leafType, let me check the value\n'
-            # print '---------------------------------------------------\n'
-            # print 'here fit oneside less than the min_samples_split :'
-            # print 'the total number of sample is ', self.n_samples
-            # print 'the leafType return model'
-            # print '---------------------------------------------------\n'
+            print '---------------------------------------------------\n'
+            print 'here fit oneside less than the min_samples_split :'
+            print 'the total number of sample is ', self.n_samples
+            print 'the leafType return model'
+            print '---------------------------------------------------\n'
             return None, leafType.fit(dataMat[:,:-1],dataMat[:,-1])
 
-        # print '************ find bestSplit do return ***************\n'
-        # print 'bestIndex : ',bestIndex, 'bestValue :', bestValue
-        # print 'bestError : ', bestError
-        # print '---------------------------------------------------\n'
+        print '************ find bestSplit do return ***************\n'
+        print 'bestIndex : ',bestIndex, 'bestValue :', bestValue
+        print 'bestError : ', bestError
+        print '---------------------------------------------------\n'
         
         #raw_input('let me see see first')
 
@@ -278,7 +273,6 @@ class treeNode(object):
         if featId == None: 
             self.splitIndex = None
             self.splitValue = featVal # leaf node featVal is weights
-            #self.parent.RInfo = self.parent.calc_R(self.parent.dataMat)
             self.RInfo = self.calc_R(self.dataMat)
         else:
             self.splitIndex = featId
@@ -329,14 +323,14 @@ class treeNode(object):
         RList = []
         def get_R(self):
             if self.RInfo == None:
-                if self.isTree(self.leftChild):
-                    get_R(self.leftChild)
-                    get_R(self.rightChild)
+                get_R(self.leftChild)
+                get_R(self.rightChild)
             else:
                 RList.append(self.RInfo)
-                if self.isTree(self.leftChild):
-                    get_R(self.leftChild)
-                    get_R(self.rightChild)
+                # if self.leftChild.splitIndex !=None:
+                #     get_R(self.leftChild)
+                # if self.rightChild.splitIndex !=None:
+                #     get_R(self.rightChild)
         get_R(self)
         return RList
 
@@ -350,18 +344,15 @@ class treeNode(object):
 
         return depth
 
-    def getTreeStruc(self, indent='    '):
+    def getTreeStruc(self, indent=' '):
         if self.leftChild and self.rightChild:
             assert(len(indent) > 0)
             print indent + 'splitIndex [%d]<%f ' % (self.splitIndex, self.splitValue )
-            self.leftChild.getTreeStruc(indent + indent[:4])
-            self.rightChild.getTreeStruc(indent + indent[:4])
+            self.leftChild.getTreeStruc(indent + indent[0])
+            self.rightChild.getTreeStruc(indent + indent[0])
         else:
-            splitValue = self.splitValue
-            if isinstance(splitValue, int):
-                print indent + 'leaf node: ', splitValue
-            else:
-                print indent + 'leaf node: ', splitValue.coef_
+            splitValue = ' '.join(map(str, self.splitValue.tolist()))
+            print indent + 'leaf node: ' + splitValue
 
     def isTree(self, obj):
         return type(obj).__name__ == 'treeNode'
@@ -384,7 +375,6 @@ class treeNode(object):
         else:
             if self.isTree(self.rightChild):
                 return self.rightChild.treeForeCast(x_test, leafType)
-
 
 
 class DecisionTreeRegresion(object):
@@ -477,7 +467,7 @@ class DecisionTreeRegresion(object):
                  min_weight_fraction_leaf=0.0,
                  max_features=None,
                  random_state=None,
-                 class_weight=None
+                 class_weight=None,
                  ):
     # LEAFTYPE = {'SGDClf': SGDClf, 'LogicReg': LogicReg, 'RidgeReg': RidgeReg, 
                  # 'RANSACReg': RANSACReg, 'BayesReg': BayesReg,
@@ -494,7 +484,6 @@ class DecisionTreeRegresion(object):
         self.max_features = max_features
         self.random_state = random_state
         self.class_weight = class_weight
-
 
     # decisionTree privite attributes, which is determinated by input data
         self.n_features = None
@@ -585,6 +574,7 @@ class DecisionTreeRegresion(object):
         return yHat.A
 
 
+
     def _validate_X_predict(self, X):
         
         """
@@ -622,17 +612,16 @@ class DecisionTreeRegresion(object):
 
 
 
-# ============================RandomFrestClassification===========================
+# ============================RandomForestClssification===========================
 
-class QLSVM_clf_RF(object):
+class RF_QLSVM_clf(object):
+
 
     def __init__(self, n_trees=10,
                 errType='lseErr_regul',leafType='LogicReg',
                 max_depth=5, min_samples_split=10, max_features=None,
                 min_weight_fraction_leaf=0.0,
-                random_state=None, class_weight=None,
-                bootstrap_data=True,
-                bootstrap_features=True):
+                random_state=None, class_weight=None):
     
         self.n_trees = n_trees
         self.errType = errType
@@ -642,12 +631,8 @@ class QLSVM_clf_RF(object):
         self.min_weight_fraction_leaf = min_weight_fraction_leaf
         self.max_features = max_features
         self.random_state = random_state
-        self.class_weight = class_weight    
-        self.bootstrap_data = bootstrap_data
-        self.bootstrap_features = bootstrap_features
+        self.class_weight = class_weight   
 
-    def fit(self, X_train, y_train):
-        
         # LEAFTYPE = {'SGDClf': SGDClf, 'LogicReg': LogicReg, 'RidgeReg': RidgeReg, 
                      # 'RANSACReg': RANSACReg, 'BayesReg': BayesReg,
                      # 'IsotonicReg': IsotonicReg, 'KernelRidge':KernelRidge
@@ -655,37 +640,44 @@ class QLSVM_clf_RF(object):
         # ERRTYPE = {'lseErr': lseErr, 'lseErr_regul': lseErr_regul}
 
 
+    def fit(self, X_train, y_train):
+
+
         from sklearn.utils import resample
         trees = []
         for n in range(self.n_trees):
             trees.append(DecisionTreeRegresion(
-                         errType=self.errType,
-                         leafType=self.leafType,
-                         max_depth=self.max_depth,
-                         min_samples_split=self.min_samples_split,
-                         min_weight_fraction_leaf=self.min_weight_fraction_leaf,
-                         max_features=self.max_features,
-                         random_state=self.random_state,
-                         class_weight=self.class_weight)
-                        )
+                            errType = self.errType, # here not pass para, ERRTYPE not defined
+                            leafType = self.leafType,
+                            max_depth = self.max_depth,
+                            min_samples_split = self.min_samples_split,
+                            min_weight_fraction_leaf = self.min_weight_fraction_leaf,
+                            max_features = self.max_features,
+                            random_state = self.random_state,
+                            class_weight = self.class_weight)
+                            )
+
         m,n = X_train.shape
-        data_oob_List = []
-        
+
         for tree in trees:
+
+            # get random features index
+            feat_ind = np.sort(np.random.choice(n, int(np.log2(n)+1), replace=False))
             # get data samples
-            if self.bootstrap_data:
-                X_boot_train, y_boot_train = resample(X_train, y_train)
-                # get oob data samples
-                boot_ind = np.in1d(X_train[:,0], X_boot_train[:,0])
-                X_oob_train = X_train[~boot_ind]
-                y_oob_train = y_train[~boot_ind]
-                data_oob_List.append(np.c_[X_oob_train, y_oob_train])
-                tree.fit(X_boot_train, y_boot_train)
-            else:
-                tree.fit(X_train, y_train)
+            X_boot_train, y_boot_train = resample(X_train[:,feat_ind], y_train)
+
+            # get oob data samples
+            boot_ind = np.in1d(X_train[:,0], X_boot_train[:,0])
+            X_oob_train = X_train[~boot_ind][:,feat_ind]
+            y_oob_train = y_train[~boot_ind]
+            tree.data_oob = np.c_[X_oob_train, y_oob_train]
+            tree.feat_ind = feat_ind
+
+            tree.fit(X_boot_train, y_boot_train)
 
         self.trees = trees
-        self.data_oob_List = data_oob_List  # each element is a array
+        self.X_train = X_train
+
         return self  # type is list
 
     def RF_predict(self, X_test):
@@ -693,179 +685,63 @@ class QLSVM_clf_RF(object):
         trees = self.trees
 
         for tree in trees:
-            X_test_tree = X_test
+            X_test_tree = X_test[:,tree.feat_ind]
             y_pred = tree.predict(X_test_tree)  #(m,1)
             predictions.append(y_pred)      
 
         predictions = np.array(predictions)  # (n,m,1) , n is number of trees
         avg_pred = np.mean(predictions, axis=0) #(m,1)
         sigmoid_pred = np.where(avg_pred>0.5, 1, 0)
-        
+
         return sigmoid_pred
 
 
-    def get_QLSVM_RF(self, X_train, y_train, lamb=2):
-
-        import get_Quasi_linear_Kernel
-        from functools import partial
-        from sklearn.svm import SVC
-        import scipy as sp
-        from sklearn.grid_search import RandomizedSearchCV
-
-        trees = self.trees
-        RBFinfo_list = []
-        QLSVM_List = []
-        f1_scores = []
-        data_oob_List = self.data_oob_List
-        QL_SVM_param_dist= {'kernel': ['precomputed'],
-                        'C': sp.stats.expon(scale=1000)}
-
-        RF_R_clus_List = []
-        # get QLSVM_List and RF_weights
-        for i,tree in enumerate(trees):
-
-            # get tree's data with it's feature
-            X_train_tree = X_train
-            # get tree's cluster RMat
-            R_clus_List = self.get_RList_byAggloCluster(tree.tree.get_RList())
-            RF_R_clus_List.append(R_clus_List)
-            RMat = np.array(R_clus_List) # (m,n,2)
-            # get QL kernel matrix
-            RBFinfo = partial(get_Quasi_linear_Kernel.get_RBFinfo,RMat=RMat,lamb=lamb)
-            Quasi_linear_kernel = partial(get_Quasi_linear_Kernel.get_KernelMatrix,RMat=RMat)
-            K_train_tree = Quasi_linear_kernel(X_train_tree,X_train_tree) # for training SVM
-            # run randomized search get best QL SVM
-            clf = SVC(kernel='precomputed')
-            n_iter_search = 100
-            random_search = RandomizedSearchCV(clf, param_distributions=QL_SVM_param_dist,
-                                           n_iter=n_iter_search)
-            random_search.fit(K_train_tree, y_train)
-            # print("Random_search Best estimator is :\n"), random_search.best_estimator_
-            QLSVM_List.append(random_search.best_estimator_)
-
-
-            # get oob test data, K_oob kernel matrix 
-            data_oob = data_oob_List[i]
-            X_oob = data_oob[:,:-1]; y_oob = data_oob[:,-1]
-            K_oob = Quasi_linear_kernel(X_oob,X_train_tree)     # for get SVM weight
-            oob_pred = random_search.best_estimator_.predict(K_oob) # (m,1)
-
-            precision, recall, fscore, support = score(y_oob, oob_pred,average='binary')
-            print '\nQLSVM number %d get training score:\n' % i
-            print 'precision: {}'.format(precision)
-            print 'recall: {}'.format(recall)
-            print 'fscore: {}'.format(fscore)
-            print '\n'
-            #clf_weight = metrics.f1_score(y_oob, oob_pred)+0.01
-            #raw_input('for the check')
-            f1_scores.append(fscore)
-
-
-        # standarize f1_scores which is RF_weights
-        f1_scores = np.array(f1_scores)
-        sum_f1_score = np.sum(f1_scores)
-        weights = np.true_divide(f1_scores, sum_f1_score)
-        RF_weights = np.nan_to_num(weights)
-        self.RF_weights = RF_weights
-        #self.RF_weights = np.ones(len(RF_weights)) / float(len(RF_weights))
-        print '*'*100
-        print 'done get trees_weights :', RF_weights # np.array,(m_tree) 
-        print '*'*100
-
-        self.QLSVM_List = QLSVM_List
-        self.QLSVM_lamb = lamb
-        self.QLSVM_X_train = X_train
-        print '*'*100
-        print 'done get QLSVM_List : '#, QLSVM_List 
-        print '*'*100
-
-        self.RF_R_clus_List = RF_R_clus_List
-        print 'done get RF_R_clus_List shape is ' ,np.array(self.RF_R_clus_List).shape
-
-
-    def QLSVM_predict(self, X_test, y_test):
-        '''QLSVM_predict
-        '''
-        import get_Quasi_linear_Kernel
-        from functools import partial
-        from sklearn.svm import SVC
-
-        QLSVM_List = self.QLSVM_List
-        RF_weights = self.RF_weights
-        X_train = self.QLSVM_X_train
-        lamb = self.QLSVM_lamb
-        RF_R_clus_List = self.RF_R_clus_List
-        trees = self.trees
-
-        y_pred = np.zeros((len(X_test),len(QLSVM_List)))
-
-        for i,clf in enumerate(QLSVM_List):
-
-            # get tree's test data with it's features
-            X_test_tree = X_test
-            X_train_tree = X_train
-
-            RMat = np.array(RF_R_clus_List[i]) # (m,n,2)
-            RBFinfo = partial(get_Quasi_linear_Kernel.get_RBFinfo,RMat=RMat,lamb=lamb)
-            Quasi_linear_kernel = partial(get_Quasi_linear_Kernel.get_KernelMatrix,RMat=RMat)
-
-            K_test_tree = Quasi_linear_kernel(X_test_tree,X_train_tree)
-            y_pred[:,i] = clf.predict(K_test_tree)
-            #print y_pred[:,i] 
-            #y_pred[:, i] = QLSVM_List[i].predict(K_test_tree)
-            precision, recall, fscore, support = score(y_test, y_pred[:,i],average='binary')
-            print '\nQLSVM number %d get test score:\n' % i
-            print 'precision: {}'.format(precision)
-            print 'recall: {}'.format(recall)
-            print 'fscore: {}'.format(fscore)
-            print '\n'
-            #raw_input('for the check')
-            y_pred[:,i] = y_pred[:,i] * RF_weights[i] 
-
-        final_y_pred_prob = np.sum(y_pred, axis=1) 
-        print 'final_y_pred_prob is \n',final_y_pred_prob
-        final_y_pred = np.where(final_y_pred_prob>=0.5, 1, 0)
-
-        return final_y_pred
-
-    def get_RList_byAggloCluster(self, RList):
-    
+    def get_RF_avgRList_byAggloCluster(self, cluster_ratio):
+        
         from sklearn.cluster import AgglomerativeClustering
         from sklearn.neighbors import kneighbors_graph
 
+        trees = self.trees
+        m,n = self.X_train.shape
+        # get_RF_RList
+        RF_RList=[]
+        for tree in trees:
 
-        R_Mat = np.array(RList)  #(m,n,2), col0=center, col1=radius
-        R_centers = R_Mat[:,:,0]  # (m,n)
-        R_radius = R_Mat[:,:,1]   # (m,n)
+            tree_RList = tree.tree.get_RList()
+            tree_RMat = np.array(tree_RList)
+            tree_new_RMat = np.zeros((tree_RMat.shape[0],n,2))
+            tree_new_RMat[:,tree.feat_ind] = tree_RMat
+            RF_RList.extend(tree_new_RMat)   # len = m
 
+        RF_R_Mat = np.array(RF_RList)  #(m,n,2), col0=center, col1=radius
+        RF_R_centers = RF_R_Mat[:,:,0]  # (m,n)
+        RF_R_radius = RF_R_Mat[:,:,1]   # (m,n)
+
+        # get the number of cluster
+        avg_num_R = int( RF_R_Mat.shape[0] /len(trees))  # total R divided by number trees
         # get the connectivity graph of R_list
-        #connect_graph = kneighbors_graph(RF_R_centers, n_neighbors=int(np.sqrt(len(trees)-1)), include_self=False)
+        connect_graph = kneighbors_graph(RF_R_centers, n_neighbors=int(np.sqrt(len(trees))), include_self=False)
         # connect_graph shape = (m,m) , if neibor then value=1, else=0
-        #0.55*R_Mat.shape[0]
-        connect_graph = kneighbors_graph(R_centers, n_neighbors=int(np.sqrt(len(R_centers))+1), include_self=False)
+        
+        R_cluster = AgglomerativeClustering(n_clusters=int(cluster_ratio*avg_num_R), connectivity=connect_graph,
+                                        linkage='ward').fit(RF_R_centers)
 
-        try:
-            R_cluster = AgglomerativeClustering(n_clusters=int(R_Mat.shape[0]*np.random.rand()*0.7)-5,
-                                                connectivity=connect_graph,
-                                                linkage='ward').fit(R_centers)
-        except ValueError,e:
-            print 'ValueError ',e
-            R_cluster = AgglomerativeClustering(n_clusters=int(np.sqrt(R_Mat.shape[0])),
-                                                connectivity=connect_graph,
-                                                linkage='ward').fit(R_centers)
         #get_RF_avgRList(R_cluster):
         R_cluster_label = R_cluster.labels_
-        R_cluster_List = []
+        RF_avgRList = []
 
         for label in np.unique(R_cluster_label):
-            R_mean  = np.mean(R_centers[R_cluster_label == label], axis=0)
-            R_radi = np.mean(R_radius[R_cluster_label == label], axis=0)
+            R_mean  = np.mean(RF_R_centers[R_cluster_label == label], axis=0)
+            R_radius = np.mean(RF_R_radius[R_cluster_label == label], axis=0)
 
-            R = np.c_[R_mean, R_radi] # shape (n,2)
-            R_cluster_List.append(R)
+            R = np.c_[R_mean, R_radius] # shape (n,2)
+            RF_avgRList.append(R)
 
-    
-        return R_cluster_List   # type is list, len=m
+
+        return RF_avgRList
+
+
+
 
 
 

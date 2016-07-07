@@ -88,8 +88,9 @@ plt.contour(xx, yy, Z, colors=['k', 'k', 'k'], linestyles=['--', '-', '--'],
 contours = plt.contourf(xx,yy,Z, cmap=plt.cm.Paired)
 
 #==========================plot RList point =================================
-plt.scatter(RMat[:,0,0], RMat[:,0,1], marker='o', c=Y_nb)
+plt.scatter(RMat[:,0,0], RMat[:,1,0], marker='o', c=Y_nb)
 
+scatter(X[:,0],X[:,1], c=Y)
 # ========================= training decision Tree ===========================
 myTree = my_RF_QLSVM.DecisionTreeRegresion(leafType='LogicReg', 
 											 errType='lseErr_regul',
@@ -182,7 +183,7 @@ clf = svm.SVC(kernel='rbf')
 clf.fit(X_train, y_train)
 y_pred = clf.predict(X_test)
 print 'confusion_matrix :\n', metrics.confusion_matrix(y_test, y_pred)
-print 'precision_score :', metrics.precision_score(y_test, y_pred)
+print 'accuracy_score :', metrics.accuracy_score(y_test, y_pred)
 print 'f1_score :', metrics.f1_score(y_test, y_pred)
 
 # ================= training and testing poly SVM ========================
@@ -191,7 +192,7 @@ clf = svm.SVC(kernel='poly',degree=3)
 clf.fit(X_train, y_train)
 y_pred = clf.predict(X_test)
 print 'confusion_matrix :\n', metrics.confusion_matrix(y_test, y_pred)
-print 'precision_score :', metrics.precision_score(y_test, y_pred)
+print 'accuracy_score :', metrics.accuracy_score(y_test, y_pred)
 print 'f1_score :', metrics.f1_score(y_test, y_pred)
 
 # ========================= plot learning_curve ==========================
@@ -334,10 +335,6 @@ QL_SVM_param_dist= {'kernel': ['precomputed'],
                     # 	  500, 550, 600, 700, 800, 900, 1000]}
 
 
-skf = cross_validation.StratifiedKFold(Y, n_folds=5,
-                                      shuffle=True,random_state=13)
-
-
 K_train = Quasi_linear_kernel(X_train,X_train)
 K_test = Quasi_linear_kernel(X_test,X_train)
 K_X = Quasi_linear_kernel(X,X)
@@ -347,7 +344,7 @@ clf = svm.SVC(kernel='precomputed')
 # run randomized search
 n_iter_search = 40
 random_search = RandomizedSearchCV(clf, param_distributions=QL_SVM_param_dist,
-                                   n_iter=n_iter_search,cv=skf)
+                                   n_iter=n_iter_search)
 start = time()
 random_search.fit(K_train, y_train)
 print("Quasi_linear kernel SVM RandomSearch took %.2f seconds for %d candidates"
@@ -361,7 +358,7 @@ print(classification_report(y_test, y_pred))
 print()
 
 # run grid search
-grid_search = GridSearchCV(clf, param_grid=QL_SVM_param_dist, cv=skf)
+grid_search = GridSearchCV(clf, param_grid=QL_SVM_param_dist)
 start = time()
 grid_search.fit(K_X, Y)
 print("GridSearchCV took %.2f seconds for %d candidate parameter settings."
@@ -378,7 +375,7 @@ clf = svm.SVC(kernel='rbf')
 # run randomized search
 n_iter_search = 500
 random_search = RandomizedSearchCV(clf, param_distributions=RBF_SVM_param_dist,
-                                   n_iter=n_iter_search, cv=skf)
+                                   n_iter=n_iter_search)
 start = time()
 random_search.fit(X_train, y_train)
 print("Quasi_linear kernel SVM RandomSearch took %.2f seconds for %d candidates"
