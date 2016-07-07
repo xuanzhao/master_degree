@@ -697,7 +697,7 @@ class RF_QLSVM_clf(object):
         trees = self.trees
 
         for tree in trees:
-            X_test_tree = X_test[:,tree.feat_ind]
+            X_test_tree = X_test
             y_pred = tree.predict(X_test_tree)  #(m,1)
             predictions.append(y_pred)      
 
@@ -735,9 +735,15 @@ class RF_QLSVM_clf(object):
         connect_graph = kneighbors_graph(RF_R_centers, n_neighbors=int(np.log2(len(trees))+1), include_self=False)
         # connect_graph shape = (m,m) , if neibor then value=1, else=0
         
-        R_cluster = AgglomerativeClustering(n_clusters=int(cluster_ratio*avg_num_R), connectivity=connect_graph,
-                                        linkage='ward').fit(RF_R_centers)
-
+        try:
+            R_cluster = AgglomerativeClustering(n_clusters=int(cluster_ratio*avg_num_R),
+                                                connectivity=connect_graph,
+                                                linkage='ward').fit(R_centers)
+        except ValueError,e:
+            print 'ValueError ',e
+            R_cluster = AgglomerativeClustering(n_clusters=int(cluster_ratio*avg_num_R)+1,
+                                                connectivity=connect_graph,
+                                                linkage='ward').fit(R_centers)
         #get_RF_avgRList(R_cluster):
         R_cluster_label = R_cluster.labels_
         RF_avgRList = []

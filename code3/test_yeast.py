@@ -68,11 +68,11 @@ Y  = np.where(Y==1, 1, 0)
 
 data = fetch_mldata('glass')
 X = data['data'] ; Y = data['target']
-Y  = np.where(Y==3, 1, 0)
+Y  = np.where(Y==6, 1, 0)
 
 data = fetch_mldata('Pima')
+X = data['data'] ; Y = data['target']
 
-data = fetch_mldata('Heart')
 
 data = scipy.io.loadmat('yeast1.mat')
 # X_train = data['X1'] ; y_train = data['Ytrain']
@@ -82,7 +82,7 @@ X = data['X']; Y = data['Y']
 Y = Y[:,1]
 
 #=========================== experiment RBF and linear SVM ======================
-skf = cross_validation.StratifiedKFold(Y, n_folds=3, random_state=True)
+skf = cross_validation.StratifiedKFold(Y, n_folds=3, shuffle=True,random_state=13)
 
 precision_score = []; recall_score = []; f1_score = []
 
@@ -92,7 +92,7 @@ for train_index, test_index in skf:
 
 	clf = svm.SVC(kernel='rbf')
 	# run randomized search
-	n_iter_search = 50
+	n_iter_search = 100
 	random_search = RandomizedSearchCV(clf, param_distributions=RBF_SVM_param_dist,
 	                                   n_iter=n_iter_search, n_jobs=4, scoring='f1')
 	start = time()
@@ -123,7 +123,7 @@ print("Mean validation f1_score: %0.3f (std: %0.03f)" %
 
 
 #=========================== experiment Quasi-linear SVM ======================
-skf = cross_validation.StratifiedKFold(Y, n_folds=3, random_state=True)
+skf = cross_validation.StratifiedKFold(Y, n_folds=3, shuffle=True,random_state=13)
 num_R = {}
 
 for ratio in np.arange(0.1,0.9,0.1):
