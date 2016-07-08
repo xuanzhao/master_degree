@@ -92,7 +92,7 @@ for train_index, test_index in skf:
 
 	clf = svm.SVC(kernel='rbf')
 	# run randomized search
-	n_iter_search = 100
+	n_iter_search = 200
 	random_search = RandomizedSearchCV(clf, param_distributions=RBF_SVM_param_dist,
 	                                   n_iter=n_iter_search, n_jobs=4, scoring='f1')
 	start = time()
@@ -126,7 +126,7 @@ print("Mean validation f1_score: %0.3f (std: %0.03f)" %
 skf = cross_validation.StratifiedKFold(Y, n_folds=3, shuffle=True,random_state=13)
 num_R = {}
 
-for ratio in np.arange(0.1,0.9,0.1):
+for ratio in np.arange(.1,.9,0.1):
 
 	precision_score = []; recall_score = []; f1_score = []
 
@@ -135,15 +135,16 @@ for ratio in np.arange(0.1,0.9,0.1):
 		y_train, y_test = Y[train_index], Y[test_index]
 
 		# training randomforest
+		print 'start training randomforest\n'
 		start = time()
-		myFore = my_RF_QLSVM.RF_QLSVM_clf(n_trees=3, 
+		myFore = my_RF_QLSVM.RF_QLSVM_clf(n_trees=30, 
 		                    leafType='LogicReg', errType='lseErr_regul',
 		                    max_depth=None, min_samples_split=5,
 		                    max_features='log2',bootstrap_data=True)
 		myFore.fit(X_train, y_train)
 		end = time() - start
 
-		# get R information
+		print 'done training randomforest\n'
 		RMat = np.array(myFore.get_RF_avgRList_byAggloCluster(ratio))
 		RBFinfo = partial(get_Quasi_linear_Kernel.get_RBFinfo,RMat=RMat)
 		Quasi_linear_kernel = partial(get_Quasi_linear_Kernel.get_KernelMatrix,RMat=RMat)
@@ -154,9 +155,9 @@ for ratio in np.arange(0.1,0.9,0.1):
 		K_test = Quasi_linear_kernel(X_test,X_train)
 
 		# run randomized search
-		n_iter_search = 50
+		n_iter_search = 100
 		random_search = RandomizedSearchCV(clf, param_distributions=QL_SVM_param_dist,
-		                                   n_iter=n_iter_search, n_jobs=4, scoring='f1')
+		                                   n_iter=n_iter_search, n_jobs=-1, scoring='f1')
 		start = time()
 		random_search.fit(K_train, y_train)
 		print("Quasi_linear kernel SVM RandomSearch took %.2f seconds for %d candidates"
@@ -186,10 +187,17 @@ for ratio in np.arange(0.1,0.9,0.1):
 
 	print("Mean validation f1_score: %0.3f (std: %0.03f)" % 
 		 (np.mean(f1_score), np.std(f1_score)))
+	print '\n======================================================================\n'
 
-	num_R[len(RMat)] = [[np.mean(precision_score), np.std(precision_score)],
-						[np.mean(recall_score), np.std(recall_score)],
-						[np.mean(f1_score), np.std(f1_score)]]
+	if len(RMat) in num_R:
+		if num_R[len(RMat)][2][0] < np.mean(f1_score):
+			num_R[len(RMat)] = [[np.mean(precision_score), np.std(precision_score)],
+								[np.mean(recall_score), np.std(recall_score)],
+								[np.mean(f1_score), np.std(f1_score)]]
+	else:
+		num_R[len(RMat)] = [[np.mean(precision_score), np.std(precision_score)],
+					[np.mean(recall_score), np.std(recall_score)],
+					[np.mean(f1_score), np.std(f1_score)]]
 
 
 	

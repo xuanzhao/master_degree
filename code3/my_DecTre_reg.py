@@ -72,7 +72,7 @@ def lseErr_regul(X, y, leafType, k=0.5):
         X0_delta = X[y==0] - X1_mean
         X_delta = np.r_[X1_delta, X0_delta]
         error = (np.sum(np.power(y[:,np.newaxis] - yHat, 2))  + \
-                k * np.sum(np.power(X_delta, 2)) ) /len(yHat)
+                k * np.sum(np.power(X_delta, 2)) ) / len(yHat)
 
         #yHat = model.predict_log_proba(X)
         #error = metrics.log_loss(y, yHat)
@@ -714,7 +714,7 @@ class RandomForestRegression(object):
 
 
 def RF_fit(X_train, y_train, n_trees=10,
-            errType='lseErr_regul',leafType='LogicReg',
+            errType='lseErr_regul',leafType='logicReg',
             max_depth=5, min_samples_split=10, max_features=None):
 
     from sklearn.utils import resample
@@ -730,23 +730,10 @@ def RF_fit(X_train, y_train, n_trees=10,
                      random_state=None,
                      class_weight=None)
                     )
-    m,n = X_train.shape
-    #data_oob_List = []
 
     for tree in trees:
-
-        # get data samples
         X_boot_train, y_boot_train = resample(X_train, y_train)
-
-        # get oob data samples
-        boot_ind = np.in1d(X_train[:,0], X_boot_train[:,0])
-        X_oob_train = X_train[~boot_ind]
-        y_oob_train = y_train[~boot_ind]
-        #data_oob_list.append(np.c_[X_oob_train, y_oob_train])
-
-        tree.oob_data = np.c_[X_oob_train, y_oob_train]
         tree.fit(X_boot_train, y_boot_train)
-
 
     return trees  # type is list
 
@@ -782,7 +769,7 @@ def get_RF_avgRList_byAggloCluster(trees):
     connect_graph = kneighbors_graph(RF_R_centers, n_neighbors=int(np.sqrt(len(trees)-1)), include_self=False)
     # connect_graph shape = (m,m) , if neibor then value=1, else=0
     
-    R_cluster = AgglomerativeClustering(n_clusters=int(.3*avg_num_R), connectivity=connect_graph,
+    R_cluster = AgglomerativeClustering(n_clusters=int(0.3*avg_num_R), connectivity=connect_graph,
                                     linkage='ward').fit(RF_R_centers)
 
     #get_RF_avgRList(R_cluster):

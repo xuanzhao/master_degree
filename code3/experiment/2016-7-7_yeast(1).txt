@@ -1,0 +1,40 @@
+#日期：2016年7月7日
+
+实验记录：
+
+1，模型： 无边界检测，bagging训练样本，构造多个决策树，之后得到一个准线性核矩阵，生成一个QLSVM分类器。
+
+2，对比分类器： RBFSVM , LinearSVM
+
+3，数据集：yeast
+
+4，实验总结：
+
+
+
+5，实验结果： CV=3(shuffle=True), yeast=((962L, 436L)),
+			  pos(class=1)=88,neg(others)=874
+	1）RBF精度在cv测试中，精度最低，说明过拟合的很厉害
+		Mean validation precision_score: 0.722 (std: 0.208)
+		Mean validation recall_score: 0.778 (std: 0.157)
+		Mean validation f1_score: 0.746 (std: 0.184)
+
+		Mean validation precision_score: 0.778 (std: 0.157)
+		Mean validation recall_score: 0.778 (std: 0.157)
+		Mean validation f1_score: 0.778 (std: 0.157)
+
+		Mean validation precision_score: 0.694 (std: 0.039)
+		Mean validation recall_score: 0.778 (std: 0.157)
+		Mean validation f1_score: 0.730 (std: 0.090)
+
+	2）Linear精度在cv测试中表现出了比RBF更好的泛化能力。
+		Mean validation precision_score: 0.889 (std: 0.157)
+		Mean validation recall_score: 0.778 (std: 0.157)
+		Mean validation f1_score: 0.822 (std: 0.137)
+
+		Mean validation precision_score: 0.806 (std: 0.142)
+		Mean validation recall_score: 0.889 (std: 0.157)
+		Mean validation f1_score: 0.841 (std: 0.137)
+
+
+	3）QLinear精度在cv测试中，最好，QL的好处是对C不敏感.

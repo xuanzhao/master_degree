@@ -16,7 +16,7 @@
 	QLSVM对C不敏感，且lambda值高的时候可以得到更为稀疏的核矩阵。
 
 
-5，实验结果：
+5，实验结果：CV=3(shuffle=False), breast=(689,9),pos(1)=444, neg(0)=239
 	1）RBF精度在cv测试几千次中，可以得到最高的0.974，一般可以得到0.970
 	RBFSVM： Model with rank: 1
 			Mean validation score: 0.974 (std: 0.012)
