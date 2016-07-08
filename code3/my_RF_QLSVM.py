@@ -226,7 +226,7 @@ class treeNode(object):
 
         for featIndex in featIndexes:
             featVal = np.unique(dataMat[:, featIndex])
-            for splitVal in np.random.choice(featVal, .7*len(featVal)):
+            for splitVal in np.random.choice(featVal, .7*len(featVal), replace=False):
                 leftMat, rightMat = self.binSplitData(dataMat, featIndex, splitVal)
                 if (leftMat.shape[0] < min_samples_split) or \
                     (rightMat.shape[0] < min_samples_split): 
@@ -748,7 +748,7 @@ class RF_QLSVM_clf(object):
 
         elif isinstance(cluster_ratio, int):
             R_cluster = AgglomerativeClustering(n_clusters=cluster_ratio,
-                                    connectivity=connect_graph,
+                                 wz   connectivity=connect_graph,
                                     linkage='ward').fit(RF_R_centers)
 
         #get_RF_avgRList(R_cluster):
