@@ -52,7 +52,7 @@ def lseErr(X, y, leafType):
         return 0.0
 
 
-def lseErr_regul(X, y, leafType, k=1):
+def lseErr_regul(X, y, leafType, k=0.1):
     if len(np.unique(y)) != 1:
         model = leafType
         model.fit(X, y)
@@ -257,10 +257,10 @@ class treeNode(object):
             # print '---------------------------------------------------\n'
             return None, leafType.fit(dataMat[:,:-1],dataMat[:,-1])
 
-        # print '************ find bestSplit do return ***************\n'
-        # print 'bestIndex : ',bestIndex, 'bestValue :', bestValue
-        # print 'bestError : ', bestError
-        # print '---------------------------------------------------\n'
+        print '************ find bestSplit do return ***************\n'
+        print 'bestIndex : ',bestIndex, 'bestValue :', bestValue
+        print 'bestError : ', bestError
+        print '---------------------------------------------------\n'
         
         #raw_input('let me see see first')
 
@@ -748,7 +748,7 @@ class RF_QLSVM_clf(object):
 
         elif isinstance(cluster_ratio, int):
             R_cluster = AgglomerativeClustering(n_clusters=cluster_ratio,
-                                 wz   connectivity=connect_graph,
+                                    connectivity=connect_graph,
                                     linkage='ward').fit(RF_R_centers)
 
         #get_RF_avgRList(R_cluster):

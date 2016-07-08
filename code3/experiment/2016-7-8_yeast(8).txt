@@ -1,0 +1,37 @@
+#日期：2016年7月8日
+
+实验记录：
+
+1，模型： 无边界检测，bagging训练样本，构造多个决策树，之后得到一个准线性核矩阵，生成一个QLSVM分类器。
+
+2，对比分类器： RBFSVM , LinearSVM
+
+3，数据集：yeast
+
+4，实验总结：
+
+5，实验结果： CV=None(shuffle=True), yeast=((625L, 436L)),
+			  pos(class=8)=91,neg(others)=534
+
+	1）RBF
+		precision_score : 0.65625
+		recall_score : 0.396226415094
+		f1_score : 0.494117647059
+
+		precision_score : 0.69696969697
+		recall_score : 0.433962264151
+		f1_score : 0.53488372093
+
+	2）Linear
+		precision_score : 0.588235294118
+		recall_score : 0.377358490566
+		f1_score : 0.459770114943
+
+		precision_score : 0.638888888889
+		recall_score : 0.433962264151
+		f1_score : 0.516853932584
+
+		precision_score : 0.657142857143
+		recall_score : 0.433962264151
+		f1_score : 0.522727272727
+	3）QLinear

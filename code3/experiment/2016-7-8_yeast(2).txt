@@ -1,0 +1,46 @@
+#日期：2016年7月8日
+
+实验记录：
+
+1，模型： 无边界检测，bagging训练样本，构造多个决策树，之后得到一个准线性核矩阵，生成一个QLSVM分类器。
+
+2，对比分类器： RBFSVM , LinearSVM
+
+3，数据集：yeast
+
+4，实验总结：
+
+5，实验结果： CV=None(shuffle=True), yeast=((625L, 436L)),
+			  pos(class=2)=158,neg(others)=467
+
+	1）RBF
+		precision_score : 0.333333333333
+		recall_score : 0.642857142857
+		f1_score : 0.4390243902447
+
+		precision_score : 0.356164383562
+		recall_score : 0.619047619048
+		f1_score : 0.452173913043
+
+		precision_score : 0.374045801527
+		recall_score : 0.583333333333
+		f1_score : 0.455813953488
+
+		precision_score : 0.341772151899
+		recall_score : 0.642857142857
+		f1_score : 0.446280991736
+
+	2）Linear
+		precision_score : 0.331288343558
+		recall_score : 0.642857142857
+		f1_score : 0.437246963563
+
+		precision_score : 0.333333333333
+		recall_score : 0.642857142857
+		f1_score : 0.439024390244
+
+		precision_score : 0.367346938776
+		recall_score : 0.642857142857
+		f1_score : 0.467532467532
+
+	3）QLinear精度在cv测试中，最好，QL的好处是对C不敏感.
