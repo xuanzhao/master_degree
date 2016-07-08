@@ -125,26 +125,27 @@ print("Mean validation f1_score: %0.3f (std: %0.03f)" %
 #=========================== experiment Quasi-linear SVM ======================
 skf = cross_validation.StratifiedKFold(Y, n_folds=3, shuffle=True,random_state=13)
 num_R = {}
+final_num_R = {}
 
-for ratio in np.arange(.1,.9,0.1):
+# precision_score = []; recall_score = []; f1_score = []
 
-	precision_score = []; recall_score = []; f1_score = []
+for train_index, test_index in skf:
+	X_train, X_test = X[train_index], X[test_index]
+	y_train, y_test = Y[train_index], Y[test_index]
 
-	for train_index, test_index in skf:
-		X_train, X_test = X[train_index], X[test_index]
-		y_train, y_test = Y[train_index], Y[test_index]
+	print 'down split dataSet to skf\n'
+	# training randomforest
+	print 'start training randomforest\n'
+	start = time()
+	myFore = my_RF_QLSVM.RF_QLSVM_clf(n_trees=30, 
+	                    leafType='LogicReg', errType='lseErr_regul',
+	                    max_depth=None, min_samples_split=5,
+	                    max_features='log2',bootstrap_data=True)
+	myFore.fit(X_train, y_train)
+	end = time() - start
+	print 'done training randomforest\n'
 
-		# training randomforest
-		print 'start training randomforest\n'
-		start = time()
-		myFore = my_RF_QLSVM.RF_QLSVM_clf(n_trees=30, 
-		                    leafType='LogicReg', errType='lseErr_regul',
-		                    max_depth=None, min_samples_split=5,
-		                    max_features='log2',bootstrap_data=True)
-		myFore.fit(X_train, y_train)
-		end = time() - start
-
-		print 'done training randomforest\n'
+	for i, ratio in enumerate(np.arange(.1,.9,0.1)):
 		RMat = np.array(myFore.get_RF_avgRList_byAggloCluster(ratio))
 		RBFinfo = partial(get_Quasi_linear_Kernel.get_RBFinfo,RMat=RMat)
 		Quasi_linear_kernel = partial(get_Quasi_linear_Kernel.get_KernelMatrix,RMat=RMat)
@@ -167,40 +168,56 @@ for ratio in np.arange(.1,.9,0.1):
 		
 		# testing QL_SVM
 		y_pred = random_search.predict(K_test)
-		print '*'*100, 'current CV :', '*'*100,'\n'
+		precision = metrics.precision_score(y_test, y_pred)
+		recall = metrics.recall_score(y_test, y_pred)
+		f1 = metrics.f1_score(y_test, y_pred)
+		print '*'*100, 'current %d CV :' % i, '*'*100,'\n'
 		#print 'confusion_matrix :\n', metrics.confusion_matrix(y_test, y_pred)
-		print 'precision_score :', metrics.precision_score(y_test, y_pred)
-		print 'recall_score :', metrics.recall_score(y_test, y_pred)
-		print 'f1_score :', metrics.f1_score(y_test, y_pred)
+		print 'precision_score :', precision
+		print 'recall_score :', recall
+		print 'f1_score :', f1 
 		print '*'*200
 
-		precision_score.append(metrics.precision_score(y_test, y_pred))
-		recall_score.append(metrics.recall_score(y_test, y_pred))
-		f1_score.append(metrics.f1_score(y_test, y_pred))
+		if i not in num_R:
+			num_R[i] = np.array([len(RMat), precision, recall, f1])
+		else:
+			num_R[i] = np.vstack([num_R[i], 
+							np.array([len(RMat), precision, recall,f1])])
 
-	print '============= Final validation score with %d RInfo ======================\n' % len(RMat)
-	print("Mean validation precision_score: %0.3f (std: %0.03f)" % 
-		 (np.mean(precision_score), np.std(precision_score)))
-
-	print("Mean validation recall_score: %0.3f (std: %0.03f)" % 
-		 (np.mean(recall_score), np.std(recall_score)))
-
-	print("Mean validation f1_score: %0.3f (std: %0.03f)" % 
-		 (np.mean(f1_score), np.std(f1_score)))
-	print '\n======================================================================\n'
-
-	if len(RMat) in num_R:
-		if num_R[len(RMat)][2][0] < np.mean(f1_score):
-			num_R[len(RMat)] = [[np.mean(precision_score), np.std(precision_score)],
-								[np.mean(recall_score), np.std(recall_score)],
-								[np.mean(f1_score), np.std(f1_score)]]
-	else:
-		num_R[len(RMat)] = [[np.mean(precision_score), np.std(precision_score)],
-					[np.mean(recall_score), np.std(recall_score)],
-					[np.mean(f1_score), np.std(f1_score)]]
+print '================== Final validation score  =========================\n'
+for i in num_R:
+	final_num_R[i] = np.mean(num_R[i], axis=0)
+	final_num_R[i] = np.vstack([final_num_R[i],
+						np.std(num_R[i], axis=0)])
 
 
-	
+# print '============= Final validation score with %d RInfo ======================\n' % len(RMat)
+
+# print("Mean validation precision_score: %0.3f (std: %0.03f)" % 
+# 	 (np.mean(precision_score), np.std(precision_score)))
+
+# print("Mean validation recall_score: %0.3f (std: %0.03f)" % 
+# 	 (np.mean(recall_score), np.std(recall_score)))
+
+# print("Mean validation f1_score: %0.3f (std: %0.03f)" % 
+# 	 (np.mean(f1_score), np.std(f1_score)))
+# print '\n======================================================================\n'
+
+		# precision_score.append(metrics.precision_score(y_test, y_pred))
+		# recall_score.append(metrics.recall_score(y_test, y_pred))
+		# f1_score.append(metrics.f1_score(y_test, y_pred))
+		# if len(RMat) in num_R:
+		# 	if num_R[len(RMat)][2][0] < np.mean(f1_score):
+		# 		num_R[len(RMat)] = [[np.mean(precision_score), np.std(precision_score)],
+		# 							[np.mean(recall_score), np.std(recall_score)],
+		# 							[np.mean(f1_score), np.std(f1_score)]]
+		# else:
+		# 	num_R[len(RMat)] = [[np.mean(precision_score), np.std(precision_score)],
+		# 				[np.mean(recall_score), np.std(recall_score)],
+		# 				[np.mean(f1_score), np.std(f1_score)]]
+
+
+		
 		
 	
 
