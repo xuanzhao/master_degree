@@ -13,7 +13,7 @@ from sklearn.neighbors import NearestNeighbors
 
 SGDClf = linear_model.SGDClassifier(loss='modified_huber',penalty='l1')
 
-LogicReg = linear_model.LogisticRegression(penalty='l1', C=1.0)
+LogicReg = linear_model.LogisticRegression(penalty='l1', C=1.0, n_jobs=-1)
 
 RidgeReg = linear_model.Ridge(alpha=1.0)
 
@@ -66,17 +66,17 @@ def lseErr_regul(X, y, leafType, k=1):
             # print 'now use predict method, leaf model is \n',model
             yHat = model.predict(X)
         
-        X1_mean = np.mean(X[y==1], axis=0)
-        X0_mean = np.mean(X[y==0], axis=0)
+        #X1_mean = np.mean(X[y==1], axis=0)
+        #X0_mean = np.mean(X[y==0], axis=0)
 
-        X1_delta = X[y==1] - X0_mean # (m,n)
-        X0_delta = X[y==0] - X1_mean
+        #X1_delta = X[y==1] - X0_mean # (m,n)
+        #X0_delta = X[y==0] - X1_mean
 
         #X1_delta = X[y==1] - X1_mean # (m,n)
         #X0_delta = X[y==0] - X0_mean
-        X_delta = np.r_[X1_delta, X0_delta]
+        #X_delta = np.r_[X1_delta, X0_delta]
         
-        #X_delta = X - np.mean(X, axis=0)
+        X_delta = X - np.mean(X, axis=0)
 
         error = (np.sum(np.power(y[:,np.newaxis] - yHat, 2))  + \
                 k * np.sum(np.power(X_delta, 2)) ) /len(yHat)
@@ -735,15 +735,21 @@ class RF_QLSVM_clf(object):
         connect_graph = kneighbors_graph(RF_R_centers, n_neighbors=int(np.log2(len(trees))+1), include_self=False)
         # connect_graph shape = (m,m) , if neibor then value=1, else=0
         
-        try:
-            R_cluster = AgglomerativeClustering(n_clusters=int(cluster_ratio*avg_num_R),
-                                                connectivity=connect_graph,
-                                                linkage='ward').fit(R_centers)
-        except ValueError,e:
-            print 'ValueError ',e
-            R_cluster = AgglomerativeClustering(n_clusters=int(cluster_ratio*avg_num_R)+1,
-                                                connectivity=connect_graph,
-                                                linkage='ward').fit(R_centers)
+        if isinstance(cluster_ratio, float):
+            try:
+                R_cluster = AgglomerativeClustering(n_clusters=int(cluster_ratio*avg_num_R),
+                                                    connectivity=connect_graph,
+                                                    linkage='ward').fit(RF_R_centers)
+            except ValueError,e:
+                print 'ValueError ',e
+                R_cluster = AgglomerativeClustering(n_clusters=int(cluster_ratio*avg_num_R)+1,
+                                                    connectivity=connect_graph,
+                                                    linkage='ward').fit(RF_R_centers)
+
+        elif isinstance(cluster_ratio, int):
+            R_cluster = AgglomerativeClustering(n_clusters=cluster_ratio,
+                                    connectivity=connect_graph,
+                                    linkage='ward').fit(RF_R_centers)
         #get_RF_avgRList(R_cluster):
         R_cluster_label = R_cluster.labels_
         RF_avgRList = []
