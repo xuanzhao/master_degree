@@ -232,7 +232,7 @@ class treeNode(object):
 
         for featIndex in featIndexes:
             featVal = np.unique(dataMat[:, featIndex])
-            for splitVal in np.random.choice(featVal, .7*len(featVal), replace=False):
+            for splitVal in np.random.choice(featVal, .3*len(featVal), replace=False):
                 leftMat, rightMat = self.binSplitData(dataMat, featIndex, splitVal)
                 if (leftMat.shape[0] < min_samples_split) or \
                     (rightMat.shape[0] < min_samples_split): 
@@ -250,12 +250,7 @@ class treeNode(object):
                 #print 'featIndex : ',featIndex, 'FeatValue :', splitVal
                 #print 'newError  : ',newError, 'bestError : ', bestError
                 #print '-------------------------------------------------\n'
-        # fit smallest error threshold
-        error = errType(dataMat[:, :-1], dataMat[:, -1], leafType)
-        if (error - bestError) < 0.1*error:
-            print 'bestError less than 0.1*Original Error, do not split\n'
-            print 'the Original Error :', error, ' the bestError :', bestError
-            return None, leafType.fit(dataMat[:,:-1],dataMat[:,-1])
+
         # fit the min_samples_split
         leftMat, rightMat = self.binSplitData(dataMat, bestIndex, bestValue)
         if (leftMat.shape[0] < min_samples_split) or \
