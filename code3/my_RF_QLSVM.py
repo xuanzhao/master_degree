@@ -52,7 +52,7 @@ def lseErr(X, y, leafType):
         return 0.0
 
 
-def lseErr_regul(X, y, leafType, k=0.1):
+def lseErr_regul(X, y, leafType, k=2):
     if len(np.unique(y)) != 1:
         model = leafType
         model.fit(X, y)
@@ -203,11 +203,12 @@ class treeNode(object):
 
         # all data is same class
         yHat = dataMat[:,-1]
+        m,n = dataMat.shape
         if len(np.unique(yHat)) == 1:
             #print 'before return leafType, let me check the value\n'
             # print '---------------------------------------------------\n'
-            # print 'here all data is same class '
-            # print 'the leafType return (class label)', int(np.unique(yHat))
+            print 'here all data is same class '
+            print 'the leafType return (class label)', int(np.unique(yHat))
             # print '---------------------------------------------------\n'
             return None, int(np.unique(yHat))
         # fit the max_depth
@@ -215,7 +216,7 @@ class treeNode(object):
             if self.selfDepth > max_depth:
                 #print 'before return leafType, let me check the value\n'
                 # print '---------------------------------------------------\n'
-                # print 'here fit the max_depth:', self.selfDepth
+                print 'here fit the max_depth:', self.selfDepth
                 # print 'the leafType return model'
                 # print '---------------------------------------------------\n'
                 return None, leafType.fit(dataMat[:,:-1],dataMat[:,-1])
@@ -223,6 +224,11 @@ class treeNode(object):
         # get the feature index for split
         featIndexes = bagForFeatures(max_features, n_features)
         bestError = np.inf; bestIndex = 0; bestValue = 0
+
+        if len(featIndexes) > m:
+            print ' number features > number data, shrink featIndexes'
+            m = int(m)
+            featIndexes = bagForFeatures(m, n_features)
 
         for featIndex in featIndexes:
             featVal = np.unique(dataMat[:, featIndex])
@@ -244,15 +250,20 @@ class treeNode(object):
                 #print 'featIndex : ',featIndex, 'FeatValue :', splitVal
                 #print 'newError  : ',newError, 'bestError : ', bestError
                 #print '-------------------------------------------------\n'
-
+        # fit smallest error threshold
+        error = errType(dataMat[:, :-1], dataMat[:, -1], leafType)
+        if (error - bestError) < 0.1*error:
+            print 'bestError less than 0.1*Original Error, do not split\n'
+            print 'the Original Error :', error, ' the bestError :', bestError
+            return None, leafType.fit(dataMat[:,:-1],dataMat[:,-1])
         # fit the min_samples_split
         leftMat, rightMat = self.binSplitData(dataMat, bestIndex, bestValue)
         if (leftMat.shape[0] < min_samples_split) or \
             (rightMat.shape[0] < min_samples_split):
            #print 'before return leafType, let me check the value\n'
             # print '---------------------------------------------------\n'
-            # print 'here fit oneside less than the min_samples_split :'
-            # print 'the total number of sample is ', self.n_samples
+            print 'here fit oneside less than the min_samples_split :\n'
+            print 'the total number of sample is ', self.n_samples
             # print 'the leafType return model'
             # print '---------------------------------------------------\n'
             return None, leafType.fit(dataMat[:,:-1],dataMat[:,-1])
@@ -673,7 +684,7 @@ class RF_QLSVM_clf(object):
 
         m,n = X_train.shape
 
-        for tree in trees:
+        for i,tree in enumerate(trees):
             # get data samples
             if self.bootstrap_data:
                 X_boot_train, y_boot_train = resample(X_train, y_train)
@@ -682,7 +693,10 @@ class RF_QLSVM_clf(object):
                 X_oob_train = X_train[~boot_ind]
                 y_oob_train = y_train[~boot_ind]
                 tree.data_oob = np.c_[X_oob_train, y_oob_train]
+                start = time()
                 tree.fit(X_boot_train, y_boot_train)
+                end = time() - start
+                print 'done training number %d tree, ues time %f hours\n' % (i,(end/60/60))
             else:
                 tree.fit(X_train, y_train)
 

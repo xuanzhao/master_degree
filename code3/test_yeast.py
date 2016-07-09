@@ -116,7 +116,6 @@ print '*'*200
 #================= experiment Quasi-linear SVM without CV =================
 skf = cross_validation.StratifiedKFold(y_train, n_folds=3, shuffle=True,random_state=13)
 num_R = {}
-final_num_R = {}
 
 # training randomforest
 print 'start training randomforest\n'
