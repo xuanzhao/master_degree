@@ -126,7 +126,7 @@ myFore = my_RF_QLSVM.RF_QLSVM_clf(n_trees=30,
                     max_features='log2',bootstrap_data=True)
 myFore.fit(X_train, y_train)
 end = time() - start
-print 'done training randomforest\n'
+print 'done training randomforest, ues time %f hours\n' % (end/60/60)
 
 for i, ratio in enumerate(np.arange(.1,.9,0.05)):
 	RMat = np.array(myFore.get_RF_avgRList_byAggloCluster(ratio))
@@ -138,7 +138,7 @@ for i, ratio in enumerate(np.arange(.1,.9,0.05)):
 	K_test = Quasi_linear_kernel(X_test,X_train)
 
 	# run randomized search
-	n_iter_search = 1000
+	n_iter_search = 500
 	random_search = RandomizedSearchCV(svm.SVC(), 
 							param_distributions=QL_SVM_param_dist,
 	                        n_iter=n_iter_search, n_jobs=-1, 

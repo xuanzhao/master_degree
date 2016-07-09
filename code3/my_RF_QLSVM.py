@@ -1,7 +1,7 @@
 from __future__ import division
 import numpy as np
 import matplotlib.pylab as plt
-
+from time import time
 from sklearn import linear_model
 from sklearn.kernel_ridge import KernelRidge
 from sklearn.isotonic import IsotonicRegression
