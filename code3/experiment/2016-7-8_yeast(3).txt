@@ -38,4 +38,12 @@
 		precision_score : 0.775510204082
 		recall_score : 0.6
 		f1_score : 0.676557863501
+
 	3）QLinear
+
+	myFore = my_RF_QLSVM.RF_QLSVM_clf(n_trees=30, 
+                    leafType='LogicReg', errType='lseErr_regul',
+                    max_depth=None, min_samples_split=5,
+                    max_features='log2',bootstrap_data=True)
+	k=1
+	X_delta = X - np.mean(X, axis=0)

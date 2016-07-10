@@ -10,40 +10,7 @@
 
 4，实验总结：
 
-
-
-5，实验结果： CV=3(shuffle=True), yeast=((962L, 436L)),
-			  pos(class=1)=88,neg(others)=874
-	1）RBF精度在cv测试中，精度最低，说明过拟合的很厉害
-		Mean validation precision_score: 0.509 (std: 0.160)
-		Mean validation recall_score: 0.284 (std: 0.113)
-		Mean validation f1_score: 0.335 (std: 0.106)
-
-		Mean validation precision_score: 0.538 (std: 0.096)
-		Mean validation recall_score: 0.341 (std: 0.073)
-		Mean validation f1_score: 0.405 (std: 0.055)
-
-		Mean validation precision_score: 0.445 (std: 0.131)
-		Mean validation recall_score: 0.307 (std: 0.085)
-		Mean validation f1_score: 0.351 (std: 0.091)
-
-	2）Linear精度在cv测试中表现出了比RBF更好的泛化能力。
-		Mean validation precision_score: 0.345 (std: 0.061)
-		Mean validation recall_score: 0.375 (std: 0.103)
-		Mean validation f1_score: 0.358 (std: 0.079)
-
-		Mean validation precision_score: 0.345 (std: 0.061)
-		Mean validation recall_score: 0.375 (std: 0.103)
-		Mean validation f1_score: 0.358 (std: 0.079)
-
-		Mean validation precision_score: 0.345 (std: 0.061)
-		Mean validation recall_score: 0.375 (std: 0.103)
-		Mean validation f1_score: 0.358 (std: 0.079)
-
-	3）QLinear精度在cv测试中，最好，QL的好处是对C不敏感.
-
-
-6，实验结果： CV=None(shuffle=True), yeast=((625L, 436L)),
+5，实验结果： CV=None(shuffle=True), yeast=((625L, 436L)),
 			  pos(class=1)=61,neg(others)=564
 	1）RBF
 		precision_score : 0.454545454545
@@ -54,9 +21,9 @@
 		recall_score : 0.37037037037
 		f1_score : 0.392156862745
 
-		precision_score : 0.366666666667
-		recall_score : 0.407407407407
-		f1_score : 0.385964912281
+		precision_score : 0.692307692308
+		recall_score : 0.333333333333
+		f1_score : 0.45
 
 	2）Linear
 		precision_score : 0.342105263158
@@ -71,10 +38,14 @@
 		recall_score : 0.481481481481
 		f1_score : 0.426229508197
 
-
-
 	3）QLinear
-
+	myFore = my_RF_QLSVM.RF_QLSVM_clf(n_trees=30, 
+                    leafType='LogicReg', errType='lseErr_regul',
+                    max_depth=None, min_samples_split=5,
+                    max_features='log2',bootstrap_data=True)
+	X_delta = X - np.mean(X, axis=0)
+	k=0.5
+	
 	{0: array([ 7.        ,  0.30952381,  0.48148148,  0.37681159]),
 	 1: array([ 11.        ,   0.30952381,   0.48148148,   0.37681159]),
 	 2: array([ 14.        ,   0.38709677,   0.44444444,   0.4137931 ]),

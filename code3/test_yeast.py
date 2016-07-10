@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.io
 from sklearn import metrics
+from sklearn.preprocessing import Normalizer
 
 from sklearn import cross_validation
 
@@ -27,7 +28,7 @@ import scipy as sp
 
 RBF_SVM_param_dist= {'kernel': ['rbf'],
 					'gamma': sp.stats.expon(scale=.1),
-					'C': sp.stats.expon(scale=5000)}
+					'C': sp.stats.expon(scale=100)}
                     # 'C': [0.01, 0.05, 0.1, 0.5, 1, 10, 20, 30, 40, 50, 
                     # 	  70, 90, 100, 150, 200, 250, 300, 350, 400, 450,
                     # 	  500, 550, 600, 700, 800, 900, 1000]}
@@ -35,7 +36,7 @@ RBF_SVM_param_dist= {'kernel': ['rbf'],
 # Linear_SVM_param_dist = {'kernel': ['linear'], 
 # 						 'C': [0.01, 0.1, 1, 10, 100, 200, 400, 500, 1000]}
 Linear_SVM_param_dist = {'kernel': ['linear'], 
-						 'C': sp.stats.expon(scale=5000)}
+						 'C': sp.stats.expon(scale=100)}
 					# 'C': [0.01, 0.03, 0.05, 0.1, 0.5, 1, 10, 20, 30, 40, 50, 
      #                 	  70, 90, 100, 150, 200, 250, 300, 350, 400, 450,
      #                 	  500, 550, 600, 650, 700, 750, 800, 850,
@@ -43,7 +44,7 @@ Linear_SVM_param_dist = {'kernel': ['linear'],
 
 QL_SVM_param_dist= {'kernel': ['precomputed'],
 					# 'gamma': sp.stats.expon(scale=.1),
-					'C': sp.stats.expon(scale=5000)}
+					'C': sp.stats.expon(scale=1000)}
                     # 'C': [0.01, 0.05, 0.1, 0.5, 1, 10, 20, 30, 40, 50, 
                     # 	  70, 90, 100, 150, 200, 250, 300, 350, 400, 450,
                     # 	  500, 550, 600, 700, 800, 900, 1000]}
@@ -59,6 +60,18 @@ def report(grid_scores, n_top=5):
         print("Parameters: {0}".format(score.parameters))
         print("")
 
+def standardize_KernelMat(KernelMat):
+	m,n = KernelMat.shape
+	#std_K = np.zeros_like(KernelMat,dtype=float)
+	std_K = np.zeros((m,n)) 
+	for i in np.arange(0,m):
+		for j in np.arange(i,m):
+			cor_val = np.sqrt(KernelMat[i,i] * KernelMat[j,j])
+			std_K[i,j] = np.true_divide(KernelMat[i,j], cor_val)
+			if i != j:
+				std_K[j,i] = std_K[i,j]
+
+	return std_K
 
 # ========================== import real data ===========================
 data = scipy.io.loadmat('breastdata.mat')
@@ -76,18 +89,22 @@ X = data['data'] ; Y = data['target']
 
 
 data = scipy.io.loadmat('yeast.mat')
-X_train = data['X1'] ; y_train = data['Ytrain'] ; y_train = y_train[:,1]
-X_test = data['Xt']; y_test = data['Ytest']; y_test = y_test[:,1]
+X_train = data['X1'] ; y_train = data['Ytrain'] ; y_train = y_train[:,2]
+X_test = data['Xt']; y_test = data['Ytest']; y_test = y_test[:,2]
 # X = np.r_[X_train, X_test]; Y = np.r_[y_train, y_test]
 #X = data['X']; Y = data['Y']
 #Y = Y[:,2]
-
+# L2 normalization
+X_train = Normalizer(norm='l2').fit_transform(X_train)
+X_test = Normalizer(norm='l2').fit_transform(X_test)
+X_train = X_train / np.tile(np.sqrt(np.sum(X_train*X_train,axis=1)+1e-6),(436,1)).transpose()
+X_test = X_test / np.tile(np.sqrt(np.sum(X_test*X_test,axis=1)+1e-6),(436,1)).transpose()
 #================= experiment RBF and linear SVM without CV======================
 # run randomized search
 skf = cross_validation.StratifiedKFold(y_train, n_folds=3, shuffle=True,random_state=13)
-n_iter_search = 1000
+n_iter_search = 200
 random_search = RandomizedSearchCV(svm.SVC(), 
-					param_distributions=Linear_SVM_param_dist,
+					param_distributions=RBF_SVM_param_dist,
                                    n_iter=n_iter_search, n_jobs=4, 
                                    cv=skf, scoring='f1')
 start = time()
@@ -98,11 +115,11 @@ print("Random_search Best estimator is :\n"), random_search.best_estimator_
 report(random_search.grid_scores_,n_top=5)
 
 C = random_search.best_params_['C']
-#gamma = random_search.best_params_['gamma']
+gamma = random_search.best_params_['gamma']
 kernel = random_search.best_params_['kernel']
 
-#clf = svm.SVC(kernel=kernel, C=C, gamma=gamma)
-clf = svm.SVC(kernel=kernel, C=C)
+clf = svm.SVC(kernel=kernel, C=C, gamma=gamma)
+#clf = svm.SVC(kernel=kernel, C=C)
 clf.fit(X_train, y_train)
 y_pred = clf.predict(X_test)
 
@@ -138,7 +155,7 @@ for i, ratio in enumerate(np.arange(.1,.9,0.05)):
 	K_test = Quasi_linear_kernel(X_test,X_train)
 
 	# run randomized search
-	n_iter_search = 500
+	n_iter_search = 200
 	random_search = RandomizedSearchCV(svm.SVC(), 
 							param_distributions=QL_SVM_param_dist,
 	                        n_iter=n_iter_search, n_jobs=-1, 

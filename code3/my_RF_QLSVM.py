@@ -52,7 +52,7 @@ def lseErr(X, y, leafType):
         return 0.0
 
 
-def lseErr_regul(X, y, leafType, k=0.5):
+def lseErr_regul(X, y, leafType, k=1):
     if len(np.unique(y)) != 1:
         model = leafType
         model.fit(X, y)
@@ -66,17 +66,17 @@ def lseErr_regul(X, y, leafType, k=0.5):
             # print 'now use predict method, leaf model is \n',model
             yHat = model.predict(X)
         
-        X1_mean = np.mean(X[y==1], axis=0)
-        X0_mean = np.mean(X[y==0], axis=0)
+        #X1_mean = np.mean(X[y==1], axis=0)
+        #X0_mean = np.mean(X[y==0], axis=0)
 
-        X1_delta = X[y==1] - X0_mean # (m,n)
-        X0_delta = X[y==0] - X1_mean
+        #X1_delta = X[y==1] - X0_mean # (m,n)
+        #X0_delta = X[y==0] - X1_mean
 
         #X1_delta = X[y==1] - X1_mean # (m,n)
         #X0_delta = X[y==0] - X0_mean
-        X_delta = np.r_[X1_delta, X0_delta]
+        #X_delta = np.r_[X1_delta, X0_delta]
         
-        #X_delta = X - np.mean(X, axis=0)
+        X_delta = X - np.mean(X, axis=0)
 
         error = (np.sum(np.power(y[:,np.newaxis] - yHat, 2))  + \
                 k * np.sum(np.power(X_delta, 2)) ) /len(yHat)
@@ -741,7 +741,7 @@ class RF_QLSVM_clf(object):
         # get the number of cluster
         avg_num_R = int( RF_R_Mat.shape[0] /len(trees))  # total R divided by number trees
         # get the connectivity graph of R_list
-        connect_graph = kneighbors_graph(RF_R_centers, n_neighbors=int(0.7*(len(trees))+1), include_self=False)
+        connect_graph = kneighbors_graph(RF_R_centers, n_neighbors=int(.1*(len(trees))+1), include_self=False)
         # connect_graph shape = (m,m) , if neibor then value=1, else=0
         
         if isinstance(cluster_ratio, float):

@@ -14,26 +14,22 @@
 			  pos(class=2)=158,neg(others)=467
 
 	1）RBF
-		precision_score : 0.333333333333
-		recall_score : 0.642857142857
-		f1_score : 0.4390243902447
-
 		precision_score : 0.356164383562
 		recall_score : 0.619047619048
 		f1_score : 0.452173913043
 
-		precision_score : 0.374045801527
+		precision_score : 0.395161290323
 		recall_score : 0.583333333333
-		f1_score : 0.455813953488
+		f1_score : 0.471153846154
 
 		precision_score : 0.341772151899
 		recall_score : 0.642857142857
 		f1_score : 0.446280991736
 
 	2）Linear
-		precision_score : 0.331288343558
-		recall_score : 0.642857142857
-		f1_score : 0.437246963563
+		precision_score : 0.414414414414
+		recall_score : 0.547619047619
+		f1_score : 0.471794871795
 
 		precision_score : 0.333333333333
 		recall_score : 0.642857142857
@@ -43,4 +39,4 @@
 		recall_score : 0.642857142857
 		f1_score : 0.467532467532
 
-	3）QLinear精度在cv测试中，最好，QL的好处是对C不敏感.
+	3）QLinear
