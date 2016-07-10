@@ -36,9 +36,8 @@ def get_KernelMatrix(X_test, X_train, RMat):
 
 		K_train = np.multiply((1+ X_train*X_train.T),(R_train*R_train.T))  #(m_d,m_d)
 
-		K_cross = K_train.dot(K_train.T)     # (m_d,m_d)*(m_d,m_d) = (m_d,m_d)
-		K_diag_train = np.diag(K_cross)   # (m_d, )
-		m,n = K_cross.shape               # m = m_d, n = m_d
+		K_diag_train = np.diag(K_train)   # (m_d, ) (k(x,x))
+		m,n = K_train.shape               # m = m_d, n = m_d
 		Cor_val = np.sqrt(np.multiply(np.tile(K_diag_train,(m,1)), # (m_d,m_d)
 							np.tile(K_diag_train,(n,1)).T))   # (m_d, m_d)
 		K_train = np.true_divide(K_train, Cor_val)    # (m_d,m_d)
@@ -52,40 +51,20 @@ def get_KernelMatrix(X_test, X_train, RMat):
 		R_train = np.mat(R_train)
 
 		K_train = np.multiply((1+ X_train*X_train.T),(R_train*R_train.T))  #(m_d,m_d)
-		K_crosss = K_train.dot(K_train.T)     # (m_d,m_d)*(m_d,m_d) = (m_d,m_d)
-		K_diag_train = np.diag(K_crosss)   # (m_d, )
+		K_diag_train = np.diag(K_train)   # (m_d, ) (k(x,x))
 
 		R_test = get_RBFinfo(X_test, RMat) 	   # (m_t, k)
 		R_test  = np.mat(R_test)
 		K_test = np.multiply((1+ X_test*X_train.T),(R_test*R_train.T))  #(m_t,m_d)
 		
-		K_cross = K_test.dot(K_train.T)   # (m_t,m_d)*(m_d,m_d) = (m_t,m_d)
-		K_diag_test = np.diag(K_test.dot(K_test.T))   # (m_t,m_d)*(m_d,m_t)=(m_t, )
-		m,n = K_cross.shape			   # m = m_t, n = m_d
-		Cor_val = np.sqrt(np.multiply(np.tile(K_diag_train,(m,1)), # (m_t, m_d)
-							np.tile(K_diag_test,(n,1)).T))  # (m_t, m_d)
+		K_diag_test = np.diag(K_test)   # (m_t, ) (k(y,y))
+		m,n = K_test.shape			   # m = m_t, n = m_d
+		Cor_val = np.sqrt(np.multiply(np.tile(K_diag_test,(n,1)).T, # (m_t, m_d)
+							np.tile(K_diag_train,(m,1))))  # (m_t, m_d)
 		K_test = np.true_divide(K_test, Cor_val)  # (m_t,m_d)
 
 		print 'down get standardized test_kernel matrix..., the shape is', K_test.shape
 		return K_test
-	# def standardize_KernelMat(KernelMat=K):
-	# 	m,n = KernelMat.shape
-	# 	#std_K = np.zeros_like(KernelMat,dtype=float)
-	# 	std_K = np.zeros((m,n)) 
-	# 	for i in np.arange(0,n):
-	# 		for j in np.arange(0,n):
-	# 			cor_val = np.sqrt(KernelMat[i,i] * KernelMat[j,j])
-	# 			std_K[i,j] = np.true_divide(KernelMat[i,j], cor_val)
-	# 			# if i != j:
-	# 			# 	std_K[j,i] = std_K[i,j]
-
-	# 	return std_K
-	# std_KMat = standardize_KernelMat()
-	# # from sklearn.preprocessing import KernelCenterer
-	# # K_std = KernelCenterer().fit_transform(K)
-	# print 'down get standardized kernelMatrix, the shape is', std_KMat.shape
-
-	# return std_KMat
 
 
 

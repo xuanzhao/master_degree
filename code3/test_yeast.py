@@ -44,7 +44,7 @@ Linear_SVM_param_dist = {'kernel': ['linear'],
 
 QL_SVM_param_dist= {'kernel': ['precomputed'],
 					# 'gamma': sp.stats.expon(scale=.1),
-					'C': sp.stats.expon(scale=1000)}
+					'C': sp.stats.expon(scale=100)}
                     # 'C': [0.01, 0.05, 0.1, 0.5, 1, 10, 20, 30, 40, 50, 
                     # 	  70, 90, 100, 150, 200, 250, 300, 350, 400, 450,
                     # 	  500, 550, 600, 700, 800, 900, 1000]}
@@ -89,8 +89,8 @@ X = data['data'] ; Y = data['target']
 
 
 data = scipy.io.loadmat('yeast.mat')
-X_train = data['X1'] ; y_train = data['Ytrain'] ; y_train = y_train[:,2]
-X_test = data['Xt']; y_test = data['Ytest']; y_test = y_test[:,2]
+X_train = data['X1'] ; y_train = data['Ytrain'] ; y_train = y_train[:,3]
+X_test = data['Xt']; y_test = data['Ytest']; y_test = y_test[:,3]
 # X = np.r_[X_train, X_test]; Y = np.r_[y_train, y_test]
 #X = data['X']; Y = data['Y']
 #Y = Y[:,2]

@@ -222,34 +222,36 @@ class treeNode(object):
                 return None, leafType.fit(dataMat[:,:-1],dataMat[:,-1])
 
         # get the feature index for split
-        featIndexes = bagForFeatures(max_features, n_features)
-        bestError = np.inf; bestIndex = 0; bestValue = 0
+        featIndex = bagForFeatures(max_features, n_features)
+        featVal = np.unique(dataMat[:, featIndexes])
+        while(len(featVal) == 1):
+            print 'featIndex %d' % featIndex ' only has one value... choose other one.'
+            featIndex = bagForFeatures(max_features, n_features)
+            featVal = np.unique(dataMat[:, featIndexes])
 
-        if len(featIndexes) > m:
-            print ' number features > number data, shrink featIndexes'
-            m = int(m)
-            featIndexes = bagForFeatures(m, n_features)
+        # random choose one sample use for split dataMat
+        pos_sample = np.choice(1, dataMat[:, yHat==1])
+        neg_sample = np.choice(1, dataMat[:, yHat==0])
+        if np.random.rand(1) > 0.5:
+            data = pos_sample
+        else:
+            data = neg_sample
 
-        for featIndex in featIndexes:
-            featVal = np.unique(dataMat[:, featIndex])
-            for splitVal in np.random.choice(featVal, .3*len(featVal), replace=False):
-                leftMat, rightMat = self.binSplitData(dataMat, featIndex, splitVal)
-                if (leftMat.shape[0] < min_samples_split) or \
-                    (rightMat.shape[0] < min_samples_split): 
-                    # print 'fit oneside less than min_samples_split'
-                    # print 'not split at current, do countinue...'
-                    continue
-                newError = errType(leftMat[:, :-1],leftMat[:, -1], leafType) + \
-                           errType(rightMat[:, :-1], rightMat[:, -1], leafType)
-
-                if newError < bestError:
-                    bestIndex = featIndex
-                    bestValue = splitVal
-                    bestError = newError
-                #print '-----------------iteration-----------------------\n'
-                #print 'featIndex : ',featIndex, 'FeatValue :', splitVal
-                #print 'newError  : ',newError, 'bestError : ', bestError
-                #print '-------------------------------------------------\n'
+        # choose one best value to split dataMat
+        bestError = np.inf; bestIndex = featIndex; bestValue = 0
+        featVal = np.unique(data[:,featIndex])
+        for splitVal in np.random.choice(featVal, 0.7*len(featVal), replace=False):
+            leftMat, rightMat = self.binSplitData(dataMat, featIndex, splitVal)
+            if (leftMat.shape[0] < min_samples_split) or \
+                (rightMat.shape[0] < min_samples_split): 
+                # print 'fit oneside less than min_samples_split'
+                # print 'not split at current, do countinue...'
+                continue
+            newError = errType(leftMat[:, :-1],leftMat[:, -1], leafType) + \
+                       errType(rightMat[:, :-1], rightMat[:, -1], leafType)
+            if newError < bestError:
+                bestValue = splitVal
+                bestError = newError
 
         # fit the min_samples_split
         leftMat, rightMat = self.binSplitData(dataMat, bestIndex, bestValue)
@@ -267,8 +269,6 @@ class treeNode(object):
         print 'bestIndex : ',bestIndex, 'bestValue :', bestValue
         print 'bestError : ', bestError
         print '---------------------------------------------------\n'
-        
-        #raw_input('let me see see first')
 
         return bestIndex, bestValue
 
