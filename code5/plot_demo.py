@@ -26,7 +26,7 @@ from sklearn.metrics import classification_report
 
 #======================== make sin data ===================================
 rng = np.random.RandomState(1)
-X = np.sort(10 * rng.rand(200, 1), axis=0)
+X = np.sort(7 * rng.rand(200, 1), axis=0)
 y1 = np.sin(X).ravel() + .25
 y2 = np.sin(X).ravel() - .25
 y1[::5] += 1 * (0.5 - rng.rand(40))
@@ -74,8 +74,8 @@ ax.scatter(X[:, 0], X[:, 1], marker='o', c=Y)
 
 myTree = my_RF_QLSVM.DecisionTreeRegresion(leafType='LogicReg', 
 											 errType='lseErr_regul',
-											 max_depth=5,
-											 min_samples_split=10)
+											 max_depth=3,
+											 min_samples_split=5)
 myTree.fit(X, Y)
 myTree.tree.getTreeStruc()
 
@@ -115,6 +115,7 @@ K_test = Quasi_linear_kernel(np.c_[xx.ravel(), yy.ravel()],X)
 clf = svm.SVC(kernel='precomputed')
 clf.fit(K_train, Y)
 Z = clf.predict(K_test)
+Z = Z.reshape(xx.shape)
 plt.pcolormesh(xx,yy,Z, cmap=plt.cm.Paired)
 #y_pred = clf.predict(K_test)
 
