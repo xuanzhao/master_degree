@@ -287,9 +287,9 @@ class treeNode(object):
             self.splitIndex = None
             self.splitValue = featVal # leaf node featVal is weights
             #self.parent.RInfo = self.parent.calc_R(self.parent.dataMat)
-            #self.RInfo = self.calc_R(self.dataMat)
-            if not isinstance(self.splitValue, int):
-                self.RInfo = self.calc_R(self.dataMat)
+            self.RInfo = self.calc_R(self.dataMat)
+            # if not isinstance(self.splitValue, int):
+            #     self.RInfo = self.calc_R(self.dataMat)
         else:
             self.splitIndex = featId
             self.splitValue = featVal
