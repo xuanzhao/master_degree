@@ -53,8 +53,8 @@ Y = Y[idx]
 fig = plt.figure()
 plt.style.use('ggplot')
 ax = fig.add_subplot(111)
-pos = ax.scatter(X1[:,0], X1[:,1], c='red')
-neg = ax.scatter(X2[:,0], X2[:,1], c='blue')
+pos = ax.scatter(X1[:,0], X1[:,1], c='red' , label='pos data')
+neg = ax.scatter(X2[:,0], X2[:,1], c='blue' , label='neg data')
 ax.scatter(X[:,0], X[:,1], c=Y)
 ax.axis('tight')
 #legend([pos, neg], ['positive sample', 'negative sample'])
@@ -116,13 +116,14 @@ clf = svm.SVC(kernel='precomputed')
 clf.fit(K_train, Y)
 Z = clf.predict(K_test)
 Z = Z.reshape(xx.shape)
-plt.pcolormesh(xx,yy,Z, cmap=plt.cm.Paired)
+plt.pcolormesh(xx,yy,Z, cmap=plt.cm.Paired, alpha=0.3)
+ax.contour(xx, yy, Z, colors=['k', 'k', 'k'], linestyles=['--', '-', '--'],
+        levels=[-.5, 0, .5],linewidths=2, label='quasi_linear SVM')
 #y_pred = clf.predict(K_test)
 
 #==========================plot RList point =================================
 kernel = ax.scatter(RMat[:,0,0], RMat[:,1,0], marker='o', c='y', s=80, label='kernel data')
 legend([pos, neg, kernel], ['positive sample', 'negative sample', 'kernel data'])
-
 
 # ========================== training RF =====================================
 myFore = my_RF_QLSVM.RF_QLSVM_clf( n_trees=3, 
@@ -132,15 +133,39 @@ myFore = my_RF_QLSVM.RF_QLSVM_clf( n_trees=3,
 							  bootstrap_data=True)
 myFore.fit(X, Y)
 # =============== RF training and testing quasi_linear SVM ==============
-RMat = np.array(myFore.get_RF_avgRList_byAggloCluster(0.8))
+RMat = np.array(myFore.get_RF_avgRList_byAggloCluster(0.5))
 from functools import partial
 RBFinfo = partial(get_Quasi_linear_Kernel.get_RBFinfo,RMat=RMat)
-Quasi_linear_kernel = partial(get_Quasi_linear_Kernel.get_KernelMatrix,RMat=RMat)
+Quasi_linear_kernel = partial(get_Quasi_linear_Kernel.get_KernelMatrix_basic,RMat=RMat)
 
 clf = svm.SVC(kernel=Quasi_linear_kernel)
 clf.fit(X, Y)
 
 
+# =========================================================================
+myFore = my_RF_QLSVM.RF_QLSVM_clf( n_trees=3, 
+                              leafType='LogicReg', errType='lseErr_regul',
+                              max_depth=3, min_samples_split=5,
+                              max_features=None,
+                              bootstrap_data=True)
+myFore.fit(X, Y)
+fig = plt.figure()
+plt.style.use('ggplot')
+ax = fig.add_subplot(111)
+pos = ax.scatter(X1[:,0], X1[:,1], c='red' , label='pos data')
+neg = ax.scatter(X2[:,0], X2[:,1], c='blue' , label='neg data')
+ax.scatter(X[:,0], X[:,1], c=Y)
+ax.axis('tight')
+RMat = np.array(myFore.trees[0].tree.get_RList())
+kernel1 = ax.scatter(RMat[:,0,0], RMat[:,1,0], marker='o', c='y', s=60, alpha=0.5,label='tree 1 kernel')
+RMat = np.array(myFore.trees[1].tree.get_RList())
+kernel2 = ax.scatter(RMat[:,0,0], RMat[:,1,0], marker='o', c='g', s=60, alpha=0.5,label='tree 2 kernel')
+RMat = np.array(myFore.trees[2].tree.get_RList())
+kernel3 = ax.scatter(RMat[:,0,0], RMat[:,1,0], marker='o', c='r', s=60, alpha=0.5,label='tree 3 kernel')
+RMat = np.array(myFore.get_RF_avgRList_byAggloCluster(1.0))
+kernel = ax.scatter(RMat[:,0,0], RMat[:,1,0], marker='o', c='k', s=100, label='clustered kernel')
+ax.legend()
+plt.title('Extract kernel data based on RandomForest')
 
 
 
@@ -153,5 +178,4 @@ clf.fit(X, Y)
 
 
 
-
-
+,

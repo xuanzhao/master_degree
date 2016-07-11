@@ -52,7 +52,7 @@ X = data['X']; Y = data['Y']
 # ========================== standardize data ===========================
 from sklearn.preprocessing import StandardScaler
 scaler = StandardScaler()
-X = Scaler.fit_transform(X)
+X = scaler.fit_transform(X)
 
 X_mean = np.mean(X,axis=0)
 X_std  = np.std(X,axis=0)
@@ -90,7 +90,6 @@ contours = plt.contourf(xx,yy,Z, cmap=plt.cm.Paired)
 #==========================plot RList point =================================
 plt.scatter(RMat[:,0,0], RMat[:,1,0], marker='o', c=Y_nb)
 
-scatter(X[:,0],X[:,1], c=Y)
 # ========================= training decision Tree ===========================
 myTree = my_RF_QLSVM.DecisionTreeRegresion(leafType='LogicReg', 
 											 errType='lseErr_regul',
@@ -133,7 +132,7 @@ print 'f1_score :', metrics.f1_score(y_test, y_pred)
 
 
 # =============== RF training and testing quasi_linear SVM ==============
-RMat = np.array(my_DecTre_reg.get_RF_avgRList_byAggloCluster(myFore))
+RMat = np.array(myFore.get_RF_avgRList_byAggloCluster(0.5))
 from functools import partial
 RBFinfo = partial(get_Quasi_linear_Kernel.get_RBFinfo,RMat=RMat)
 Quasi_linear_kernel = partial(get_Quasi_linear_Kernel.get_KernelMatrix,RMat=RMat)
@@ -172,7 +171,7 @@ for train_index, test_index in skf:
 	y_pred = myFore.QLSVM_predict(X_test)
 	print '*'*100, 'current CV :', '*'*100,'\n'
 	#print 'confusion_matrix :\n', metrics.confusion_matrix(y_test, y_pred)
-	print 'accuracy_score :', metrics.accuracy_score(y_test, y_pred)
+	print 'precision_score :', metrics.precision_score(y_test, y_pred)
 	print 'recall_score :', metrics.recall_score(y_test, y_pred)
 	print 'f1_score :', metrics.f1_score(y_test, y_pred)
 	print '*'*200
@@ -183,7 +182,7 @@ clf = svm.SVC(kernel='rbf')
 clf.fit(X_train, y_train)
 y_pred = clf.predict(X_test)
 print 'confusion_matrix :\n', metrics.confusion_matrix(y_test, y_pred)
-print 'accuracy_score :', metrics.accuracy_score(y_test, y_pred)
+print 'accuracy_score :', metrics.precision_score(y_test, y_pred)
 print 'f1_score :', metrics.f1_score(y_test, y_pred)
 
 # ================= training and testing poly SVM ========================
@@ -387,6 +386,34 @@ y_test, y_pred = y_test, random_search.predict(X_test)
 #Call predict on the estimator with the best found parameters.
 print(classification_report(y_test, y_pred))
 print()
+
+
+skf = cross_validation.StratifiedKFold(Y, n_folds=3, random_state=True)
+
+for train_index, test_index in skf:
+	X_train, X_test = X[train_index], X[test_index]
+	y_train, y_test = Y[train_index], Y[test_index]
+
+	clf = svm.SVC(kernel='rbf')
+	# run randomized search
+	n_iter_search = 50
+	random_search = RandomizedSearchCV(clf, param_distributions=RBF_SVM_param_dist,
+	                                   n_iter=n_iter_search, n_jobs=4)
+	start = time()
+	random_search.fit(X_train, y_train)
+	print("Quasi_linear kernel SVM RandomSearch took %.2f seconds for %d candidates"
+      " parameter settings." % ((time() - start), n_iter_search))
+	print("Random_search Best estimator is :\n"), random_search.best_estimator_
+	report(random_search.grid_scores_,n_top=5)
+	
+	y_pred = random_search.predict(X_test)
+	print '*'*100, 'current CV :', '*'*100,'\n'
+	#print 'confusion_matrix :\n', metrics.confusion_matrix(y_test, y_pred)
+	print 'precision_score :', metrics.precision_score(y_test, y_pred)
+	print 'recall_score :', metrics.recall_score(y_test, y_pred)
+	print 'f1_score :', metrics.f1_score(y_test, y_pred)
+	print '*'*200
+
 
 
 #=================== plot_forest_feature importance ====================

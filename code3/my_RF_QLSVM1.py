@@ -53,7 +53,7 @@ def lseErr(X, y, leafType):
         return 0.0
 
 
-def lseErr_regul(X, y, leafType, k=4):
+def lseErr_regul(X, y, leafType, k=2):
     if len(np.unique(y)) != 1:
         model = leafType
         model.fit(X, y)
@@ -66,7 +66,8 @@ def lseErr_regul(X, y, leafType, k=4):
             model.__getattribute__('predict')
             # print 'now use predict method, leaf model is \n',model
             yHat = model.predict(X)
-        yHat = yHat[:,1]
+
+        yHat = yHat[:,1] # get predict is 1
         #X1_mean = np.mean(X[y==1], axis=0)
         #X0_mean = np.mean(X[y==0], axis=0)
 
@@ -79,17 +80,17 @@ def lseErr_regul(X, y, leafType, k=4):
         
         X_delta = X - np.mean(X, axis=0)
 
-        error = (np.sum(np.power(y - yHat, 2))  + \
-                k * np.sum(np.power(X_delta, 2)) ) /len(yHat)
+        error_mse = np.sum(np.power(y - yHat, 2)) / len(yHat)
+        error_reg = k * np.sum(np.power(X_delta, 2)) /len(yHat)
 
         #yHat = model.predict_log_proba(X)
         #error = metrics.log_loss(y, yHat)
-        return error
+        return (error_mse, error_reg)
     else:
         X_mean = np.mean(X,axis=0)
         X_delta = X - X_mean
-        error = k * np.sum(np.power(X_delta, 2)) / len(X_delta)
-        return error
+        error_reg = k * np.sum(np.power(X_delta, 2)) / len(X_delta)
+        return (0, error_reg)
         
 # def get_RList(tree):
 
@@ -233,15 +234,24 @@ class treeNode(object):
 
         for featIndex in featIndexes:
             featVal = np.unique(dataMat[:, featIndex])
-            for splitVal in np.random.choice(featVal, 0.5*len(featVal), replace=False):
+            for splitVal in np.random.choice(featVal, 0.6*len(featVal), replace=False):
                 leftMat, rightMat = self.binSplitData(dataMat, featIndex, splitVal)
                 if (leftMat.shape[0] < min_samples_split) or \
                     (rightMat.shape[0] < min_samples_split): 
                     # print 'fit oneside less than min_samples_split'
                     # print 'not split at current, do countinue...'
                     continue
-                newError = errType(leftMat[:, :-1],leftMat[:, -1], leafType) + \
-                           errType(rightMat[:, :-1], rightMat[:, -1], leafType)
+                # fit dataMat is linear separable
+                errorL_mse, errorL_reg = errType(leftMat[:, :-1],leftMat[:, -1], leafType)
+                errorR_mse, errorR_reg = errType(rightMat[:, :-1], rightMat[:, -1], leafType)
+                error_mse = errorL_mse + errorR_mse
+                error_reg = errorL_reg + errorR_reg
+                print 'error_mse is ', error_mse
+                if error_mse < 0.1:
+                    print 'current subDataSet is approxmiately linear separable, do not split'
+                    return None, leafType.fit(dataMat[:,:-1],dataMat[:,-1])
+                else:
+                    newError = error_mse + error_reg
 
                 if newError < bestError:
                     bestIndex = featIndex
@@ -287,7 +297,6 @@ class treeNode(object):
             self.splitIndex = None
             self.splitValue = featVal # leaf node featVal is weights
             #self.parent.RInfo = self.parent.calc_R(self.parent.dataMat)
-            #self.RInfo = self.calc_R(self.dataMat)
             if not isinstance(self.splitValue, int):
                 self.RInfo = self.calc_R(self.dataMat)
         else:
