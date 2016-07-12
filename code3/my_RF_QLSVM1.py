@@ -13,7 +13,7 @@ from sklearn.neighbors import NearestNeighbors
 
 SGDClf = linear_model.SGDClassifier(loss='modified_huber',penalty='l1')
 
-LogicReg = linear_model.LogisticRegression(penalty='l1', C=1.0, n_jobs=4)
+LogicReg = linear_model.LogisticRegression(penalty='l1', C=10.0, n_jobs=4)
 
 RidgeReg = linear_model.Ridge(alpha=1.0)
 
@@ -53,7 +53,7 @@ def lseErr(X, y, leafType):
         return 0.0
 
 
-def lseErr_regul(X, y, leafType, k=2):
+def lseErr_regul(X, y, leafType, k1=1,k2=0):
     if len(np.unique(y)) != 1:
         model = leafType
         model.fit(X, y)
@@ -68,28 +68,30 @@ def lseErr_regul(X, y, leafType, k=2):
             yHat = model.predict(X)
 
         yHat = yHat[:,1] # get predict is 1
-        #X1_mean = np.mean(X[y==1], axis=0)
-        #X0_mean = np.mean(X[y==0], axis=0)
+        neg_ratio = np.true_divide(np.sum(y==0), len(y))
+        X1_mean = np.mean(X[y==1], axis=0)
+        X0_mean = np.mean(X[y==0], axis=0)
 
-        #X1_delta = X[y==1] - X0_mean # (m,n)
-        #X0_delta = X[y==0] - X1_mean
+        X1_delta = X[y==1] - X0_mean # (m,n)
+        X0_delta = X[y==0] - X1_mean
 
         #X1_delta = X[y==1] - X1_mean # (m,n)
         #X0_delta = X[y==0] - X0_mean
-        #X_delta = np.r_[X1_delta, X0_delta]
+        X_delta2 = np.r_[X1_delta, X0_delta]
         
-        X_delta = X - np.mean(X, axis=0)
+        X_delta1 = X - np.mean(X, axis=0)
 
-        error_mse = np.sum(np.power(y - yHat, 2)) / len(yHat)
-        error_reg = k * np.sum(np.power(X_delta, 2)) /len(yHat)
+        error_mse = np.sum(np.power(y - yHat, 2)) / len(yHat) + neg_ratio
+        error_reg = (k1 * np.sum(np.power(X_delta1, 2)) +
+                     k2 * np.sum(np.power(X_delta2, 2)) )/len(yHat)
 
         #yHat = model.predict_log_proba(X)
         #error = metrics.log_loss(y, yHat)
         return (error_mse, error_reg)
     else:
-        X_mean = np.mean(X,axis=0)
-        X_delta = X - X_mean
-        error_reg = k * np.sum(np.power(X_delta, 2)) / len(X_delta)
+        X_delta1 = X - np.mean(X, axis=0)
+        error_reg = k1 * np.sum(np.power(X_delta1, 2)) / len(X_delta1)
+        print ' current split data is all same clss'
         return (0, error_reg)
         
 # def get_RList(tree):
@@ -105,9 +107,9 @@ def lseErr_regul(X, y, leafType, k=2):
 #     get_R(tree)
 #     return RList
 
-def get_boundary(X, y):
+def get_boundary(X, y,n_neighbors=8,radius=0.5):
 
-    neigh = NearestNeighbors(n_neighbors=8, radius=1.0, n_jobs=4)
+    neigh = NearestNeighbors(n_neighbors=n_neighbors, radius=radius, n_jobs=4)
     neigh.fit(X)
 
     boundary_points = []
@@ -212,6 +214,15 @@ class treeNode(object):
             print 'here all data is same class '
             print 'the leafType return (class label)', int(np.unique(yHat))
             # print '---------------------------------------------------\n'
+            if self.parent.rightChild is self:
+                leftChild = self.parent.leftChild
+                print 'this is rightChild, my class is', int(np.unique(yHat))
+                print 'And the leftChild is', leftChild.splitValue
+                if isinstance(leftChild.splitValue, int):
+                    if leftChild.splitValue != rightChild.splitValue:
+                        print 'two pair of leftNode is different class data, get RInfo...'
+                        self.RInfo = self.calc_R(self.dataMat)
+                        leftChild.Rinfo = leftChild.calc_R(leftChild.dataMat)
             return None, int(np.unique(yHat))
         # fit the max_depth
         if max_depth != None:
@@ -234,7 +245,7 @@ class treeNode(object):
 
         for featIndex in featIndexes:
             featVal = np.unique(dataMat[:, featIndex])
-            for splitVal in np.random.choice(featVal, 0.5*len(featVal), replace=False):
+            for splitVal in np.random.choice(featVal, 0.4*len(featVal), replace=False):
                 leftMat, rightMat = self.binSplitData(dataMat, featIndex, splitVal)
                 if (leftMat.shape[0] < min_samples_split) or \
                     (rightMat.shape[0] < min_samples_split): 
@@ -247,9 +258,14 @@ class treeNode(object):
                 error_mse = errorL_mse + errorR_mse
                 error_reg = errorL_reg + errorR_reg
                 #print 'error_mse is ', error_mse
-                if error_mse < 0.17:
-                    print 'current subDataSet is approxmiately linear separable, do not split'
-                    return None, leafType.fit(dataMat[:,:-1],dataMat[:,-1])
+                if error_mse < 0.7:
+                    Error_mes, Error_reg = errType(dataMat[:,:-1],dataMat[:,-1], leafType)
+                    print 'Error_mes is', Error_mes
+                    if Error_mes < 0.8:
+                        print 'current subDataSet is approxmiately linear separable, do not split'
+                        return None, leafType.fit(dataMat[:,:-1],dataMat[:,-1])
+                    else:
+                        print 'oneside mse is less than threshold, but whole dataMat can not fit linear model well'
                 else:
                     newError = error_mse + error_reg
 
@@ -297,8 +313,9 @@ class treeNode(object):
             self.splitIndex = None
             self.splitValue = featVal # leaf node featVal is weights
             #self.parent.RInfo = self.parent.calc_R(self.parent.dataMat)
-            #if not isinstance(self.splitValue, int):
-            self.RInfo = self.calc_R(self.dataMat)
+            if not isinstance(self.splitValue, int):
+                self.RInfo = self.calc_R(self.dataMat)
+
         else:
             self.splitIndex = featId
             self.splitValue = featVal
@@ -380,7 +397,7 @@ class treeNode(object):
             if isinstance(splitValue, int):
                 print indent + 'leaf node: ', splitValue
             else:
-                print indent + 'leaf node: ', splitValue.coef_
+                print indent + 'leaf node: ', type(splitValue)
 
 
 
@@ -751,9 +768,9 @@ class RF_QLSVM_clf(object):
         RF_R_radius = RF_R_Mat[:,:,1]   # (m,n)
 
         # get the number of cluster
-        avg_num_R = int( RF_R_Mat.shape[0] /len(trees))  # total R divided by number trees
+        avg_num_R = int(RF_R_Mat.shape[0])  # total R divided by number trees
         # get the connectivity graph of R_list
-        connect_graph = kneighbors_graph(RF_R_centers, n_neighbors=int(.7*(len(trees))+1), include_self=False)
+        connect_graph = kneighbors_graph(RF_R_centers, n_neighbors=int(0.5*len(trees)), include_self=False)
         # connect_graph shape = (m,m) , if neibor then value=1, else=0
         
         if isinstance(cluster_ratio, float):

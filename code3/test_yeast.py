@@ -5,10 +5,11 @@ from sklearn import metrics
 from sklearn.preprocessing import Normalizer
 
 from sklearn import cross_validation
+from sklearn.cross_validation import train_test_split
 
 from sklearn import svm
 from __future__ import division
-import my_RF_QLSVM
+import my_RF_QLSVM1
 import my_QLSVM_RF
 import get_Quasi_linear_Kernel
 from sklearn.learning_curve import learning_curve
@@ -28,7 +29,7 @@ import scipy as sp
 
 RBF_SVM_param_dist= {'kernel': ['rbf'],
 					'gamma': sp.stats.expon(scale=.1),
-					'C': sp.stats.expon(scale=5000)}
+					'C': sp.stats.expon(scale=1000)}
                     # 'C': [0.01, 0.05, 0.1, 0.5, 1, 10, 20, 30, 40, 50, 
                     # 	  70, 90, 100, 150, 200, 250, 300, 350, 400, 450,
                     # 	  500, 550, 600, 700, 800, 900, 1000]}
@@ -79,10 +80,13 @@ X = data['X']; Y = data['Y']
 
 # data = scipy.io.loadmat('sonar.mat')
 # X = data['X']; Y = data['Y']
-data = fetch_mldata('sonar')
+data = fetch_mldata('glass')
 X = data['data'] ; Y = data['target']
-Y  = np.where(Y==1, 1, 0)
-
+Y  = np.where(Y==3, 1, 0)
+from sklearn.preprocessing import StandardScaler
+X = StandardScaler().fit_transform(X)
+X_train, X_test, y_train, y_test = train_test_split(X, Y,
+											test_size=0.33, random_state=13)
 
 data = fetch_mldata('Pima')
 X = data['data'] ; Y = data['target']
@@ -91,7 +95,10 @@ X = data['data'] ; Y = data['target']
 data = scipy.io.loadmat('yeast.mat')
 X_train = data['X1'] ; y_train = data['Ytrain'] ; y_train = y_train[:,15]
 X_test = data['Xt']; y_test = data['Ytest']; y_test = y_test[:,15]
-# X = np.r_[X_train, X_test]; Y = np.r_[y_train, y_test]
+X = np.r_[X_train, X_test]; Y = np.r_[y_train, y_test]
+
+X1 ,X2 = get_boundary(X_train, y_train,n_neighbors=6,radius=0.5)
+X_train = X1[:,:-1] ; y_train = X1[:,-1]
 #X = data['X']; Y = data['Y']
 #Y = Y[:,2]
 # L2 normalization
@@ -145,7 +152,7 @@ myFore.fit(X_train, y_train)
 end = time() - start
 print 'done training randomforest, ues time %f hours\n' % (end/60/60)
 
-for i, ratio in enumerate(np.arange(.1,.9,0.05)):
+for i, ratio in enumerate(np.arange(.1,1.0,0.05)):
 	RMat = np.array(myFore.get_RF_avgRList_byAggloCluster(ratio))
 	RBFinfo = partial(get_Quasi_linear_Kernel.get_RBFinfo,RMat=RMat)
 	Quasi_linear_kernel = partial(get_Quasi_linear_Kernel.get_KernelMatrix,RMat=RMat)
@@ -155,7 +162,7 @@ for i, ratio in enumerate(np.arange(.1,.9,0.05)):
 	K_test = Quasi_linear_kernel(X_test,X_train)
 
 	# run randomized search
-	n_iter_search = 200
+	n_iter_search = 100
 	random_search = RandomizedSearchCV(svm.SVC(), 
 							param_distributions=QL_SVM_param_dist,
 	                        n_iter=n_iter_search, n_jobs=-1, 

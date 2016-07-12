@@ -38,10 +38,10 @@ def get_KernelMatrix(X_test, X_train, RMat):
 
 		K_diag_train = np.diag(K_train)   # (m_d, ) (k(x,x))
 		m,n = K_train.shape               # m = m_d, n = m_d
-		Cor_val = np.sqrt(np.multiply(np.tile(K_diag_train,(m,1)), # (m_d,m_d)
-							np.tile(K_diag_train,(n,1)).T))   # (m_d, m_d)
+		Cor_val = np.sqrt(np.multiply(np.tile(K_diag_train,(n,1)).T, # (m_d,m_d)
+							np.tile(K_diag_train,(m,1))))   # (m_d, m_d)
 		K_train = np.true_divide(K_train, Cor_val)    # (m_d,m_d)
-
+		K_train = np.nan_to_num(K_train)
 		print 'down get standardized train_kernel matrix..., the shape is', K_train.shape
 		return K_train
 
@@ -62,7 +62,7 @@ def get_KernelMatrix(X_test, X_train, RMat):
 		Cor_val = np.sqrt(np.multiply(np.tile(K_diag_test,(n,1)).T, # (m_t, m_d)
 							np.tile(K_diag_train,(m,1))))  # (m_t, m_d)
 		K_test = np.true_divide(K_test, Cor_val)  # (m_t,m_d)
-
+		K_test = np.nan_to_num(K_test)
 		print 'down get standardized test_kernel matrix..., the shape is', K_test.shape
 		return K_test
 
