@@ -53,7 +53,7 @@ def lseErr(X, y, leafType):
         return 0.0
 
 
-def lseErr_regul(X, y, leafType, k1=1,k2=0):
+def lseErr_regul(X, y, leafType, k1=2,k2=1):
     if len(np.unique(y)) != 1:
         model = leafType
         model.fit(X, y)
@@ -91,7 +91,7 @@ def lseErr_regul(X, y, leafType, k1=1,k2=0):
     else:
         X_delta1 = X - np.mean(X, axis=0)
         error_reg = k1 * np.sum(np.power(X_delta1, 2)) / len(X_delta1)
-        print ' current split data is all same clss'
+        #print ' current split data is all same clss'
         return (0, error_reg)
         
 # def get_RList(tree):
@@ -223,6 +223,9 @@ class treeNode(object):
                         print 'two pair of leftNode is different class data, get RInfo...'
                         self.RInfo = self.calc_R(self.dataMat)
                         leftChild.Rinfo = leftChild.calc_R(leftChild.dataMat)
+                elif not isinstance(leftChild.splitValue, float):
+                    print 'leftChild is model, get self RInfo...'
+                    self.RInfo = self.calc_R(self.dataMat)
             return None, int(np.unique(yHat))
         # fit the max_depth
         if max_depth != None:
@@ -258,10 +261,10 @@ class treeNode(object):
                 error_mse = errorL_mse + errorR_mse
                 error_reg = errorL_reg + errorR_reg
                 #print 'error_mse is ', error_mse
-                if error_mse < 1.0:
+                if error_mse < .7:
                     Error_mes, Error_reg = errType(dataMat[:,:-1],dataMat[:,-1], leafType)
                     print 'Error_mes is', Error_mes
-                    if Error_mes < 1.1:
+                    if Error_mes < 0.7:
                         print 'current subDataSet is approxmiately linear separable, do not split'
                         return None, leafType.fit(dataMat[:,:-1],dataMat[:,-1])
                     else:
@@ -305,17 +308,21 @@ class treeNode(object):
                    max_features):
 
         self.n_samples, self.n_features = dataMat[:,:-1].shape
+        self.dataMat = dataMat
         featId, featVal = self.chooseBestSplit(dataMat, leafType, errType, 
                         max_depth, min_samples_split, min_weight_fraction_leaf, 
                         class_weight, max_features, self.n_features)
-        self.dataMat = dataMat
         if featId == None: 
             self.splitIndex = None
             self.splitValue = featVal # leaf node featVal is weights
             #self.parent.RInfo = self.parent.calc_R(self.parent.dataMat)
             if not isinstance(self.splitValue, int):
                 self.RInfo = self.calc_R(self.dataMat)
-
+                if self is self.parent.rightChild:
+                    leafChild = self.parent.leftChild
+                    if isinstance(leftChild.splitVal, int):
+                        print 'This is rightchild ( a model), and leftChild is pure class, leftChild get RInfo...'
+                        leftChild.Rinfo = leftChild.calc_R(leftChild.dataMat)
         else:
             self.splitIndex = featId
             self.splitValue = featVal

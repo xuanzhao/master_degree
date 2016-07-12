@@ -66,30 +66,32 @@ def lseErr_regul(X, y, leafType, k=1):
             model.__getattribute__('predict')
             # print 'now use predict method, leaf model is \n',model
             yHat = model.predict(X)
-        yHat = yHat[:,1]
-        #X1_mean = np.mean(X[y==1], axis=0)
-        #X0_mean = np.mean(X[y==0], axis=0)
+        yHat = yHat[:,1] # get predict is 1
 
-        #X1_delta = X[y==1] - X0_mean # (m,n)
-        #X0_delta = X[y==0] - X1_mean
+        # X1_mean = np.mean(X[y==1], axis=0)
+        # X0_mean = np.mean(X[y==0], axis=0)
+
+        # X1_delta = X[y==1] - X0_mean # (m,n)
+        # X0_delta = X[y==0] - X1_mean
 
         #X1_delta = X[y==1] - X1_mean # (m,n)
         #X0_delta = X[y==0] - X0_mean
-        #X_delta = np.r_[X1_delta, X0_delta]
+        #X_delta2 = np.r_[X1_delta, X0_delta]
         
         X_delta = X - np.mean(X, axis=0)
 
-        error = (np.sum(np.power(y - yHat, 2))  + \
-                k * np.sum(np.power(X_delta, 2)) ) /len(yHat)
+        error_mse = np.sum(np.power(y - yHat, 2)) / len(yHat)
+        error_reg = k * np.sum(np.power(X_delta, 2)) /len(yHat)
 
         #yHat = model.predict_log_proba(X)
         #error = metrics.log_loss(y, yHat)
-        return error
+        return (error_mse, error_reg)
     else:
-        X_mean = np.mean(X,axis=0)
-        X_delta = X - X_mean
-        error = k * np.sum(np.power(X_delta, 2)) / len(X_delta)
-        return error
+        X_delta = X - np.mean(X, axis=0)
+        error_reg = k * np.sum(np.power(X_delta, 2)) / len(X_delta)
+        #print ' current split data is all same clss'
+        return (0, error_reg)
+        
         
 # def get_RList(tree):
 
@@ -240,8 +242,21 @@ class treeNode(object):
                     # print 'fit oneside less than min_samples_split'
                     # print 'not split at current, do countinue...'
                     continue
-                newError = errType(leftMat[:, :-1],leftMat[:, -1], leafType) + \
-                           errType(rightMat[:, :-1], rightMat[:, -1], leafType)
+                errorL_mse, errorL_reg = errType(leftMat[:, :-1],leftMat[:, -1], leafType)
+                errorR_mse, errorR_reg = errType(rightMat[:, :-1], rightMat[:, -1], leafType)
+                error_mse = errorL_mse + errorR_mse
+                error_reg = errorL_reg + errorR_reg
+                #print 'error_mse is ', error_mse
+                if error_mse < .1:
+                    Error_mes, Error_reg = errType(dataMat[:,:-1],dataMat[:,-1], leafType)
+                    print 'Error_mes is', Error_mes
+                    if Error_mes < 0.15:
+                        print 'current subDataSet is approxmiately linear separable, do not split'
+                        return None, leafType.fit(dataMat[:,:-1],dataMat[:,-1])
+                    else:
+                        print 'oneside mse is less than threshold, but whole dataMat can not fit linear model well'
+                else:
+                    newError = error_mse + error_reg
 
                 if newError < bestError:
                     bestIndex = featIndex
@@ -279,10 +294,10 @@ class treeNode(object):
                    max_features):
 
         self.n_samples, self.n_features = dataMat[:,:-1].shape
+        self.dataMat = dataMat
         featId, featVal = self.chooseBestSplit(dataMat, leafType, errType, 
                         max_depth, min_samples_split, min_weight_fraction_leaf, 
                         class_weight, max_features, self.n_features)
-        self.dataMat = dataMat
         if featId == None: 
             self.splitIndex = None
             self.splitValue = featVal # leaf node featVal is weights

@@ -101,6 +101,50 @@ def get_KernelMatrix_basic(X_test, X_train, RMat):
 
 	return K
 
+def get_KernelMatrix_x(X_test, X_train, RMat):
+	# Construct the semi-positive definite kernel matrix ,size is (m,m)
+	T = (X_test is X_train)
+	X_train = np.mat(X_train)   # (m_d,n)
+	X_test  = np.mat(X_test)	# (m_t,n)
 
+   	if T:
+   		print 'create standarized train_kernel matrix...'
+   		R_train = get_RBFinfo(X_train, RMat)   # (m_d, k)
+		R_train = np.mat(R_train)
+
+		K_train = np.multiply((1+ X_train*X_train.T),(R_train*R_train.T))  #(m_d,m_d)
+
+		K_cross = K_train.dot(K_train.T)     # (m_d,m_d)*(m_d,m_d) = (m_d,m_d)
+		K_diag_train = np.diag(K_cross)   # (m_d, )
+		m,n = K_cross.shape               # m = m_d, n = m_d
+		Cor_val = np.sqrt(np.multiply(np.tile(K_diag_train,(m,1)), # (m_d,m_d)
+							np.tile(K_diag_train,(n,1)).T))   # (m_d, m_d)
+		K_train = np.true_divide(K_train, Cor_val)    # (m_d,m_d)
+
+		print 'down get standardized train_kernel matrix..., the shape is', K_train.shape
+		return K_train
+
+	else:
+		print 'create standarized test_kernel matrix...'
+		R_train = get_RBFinfo(X_train, RMat)   # (m_d, k)
+		R_train = np.mat(R_train)
+
+		K_train = np.multiply((1+ X_train*X_train.T),(R_train*R_train.T))  #(m_d,m_d)
+		K_cross = K_train.dot(K_train.T)     # (m_d,m_d)*(m_d,m_d) = (m_d,m_d)
+		K_diag_train = np.diag(K_cross)   # (m_d, )
+
+		R_test = get_RBFinfo(X_test, RMat) 	   # (m_t, k)
+		R_test  = np.mat(R_test)
+		K_test = np.multiply((1+ X_test*X_train.T),(R_test*R_train.T))  #(m_t,m_d)
+		
+		K_cross = K_test.dot(K_train.T)   # (m_t,m_d)*(m_d,m_d) = (m_t,m_d)
+		K_diag_test = np.diag(K_test.dot(K_test.T))   # (m_t,m_d)*(m_d,m_t)=(m_t, )
+		m,n = K_cross.shape			   # m = m_t, n = m_d
+		Cor_val = np.sqrt(np.multiply(np.tile(K_diag_train,(m,1)), # (m_t, m_d)
+							np.tile(K_diag_test,(n,1)).T))  # (m_t, m_d)
+		K_test = np.true_divide(K_test, Cor_val)  # (m_t,m_d)
+
+		print 'down get standardized test_kernel matrix..., the shape is', K_test.shape
+		return K_test
 
 
