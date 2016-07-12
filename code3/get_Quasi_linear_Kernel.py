@@ -55,10 +55,12 @@ def get_KernelMatrix(X_test, X_train, RMat):
 
 		R_test = get_RBFinfo(X_test, RMat) 	   # (m_t, k)
 		R_test  = np.mat(R_test)
-		K_test = np.multiply((1+ X_test*X_train.T),(R_test*R_train.T))  #(m_t,m_d)
+		K_cross = np.multiply((1+ X_test*X_test.T),(R_test*R_test.T))  #(m_t,m_d)
+		K_diag_test = np.diag(K_cross)   # (m_t, ) (k(y,y))
 		
-		K_diag_test = np.diag(K_test)   # (m_t, ) (k(y,y))
+		K_test = np.multiply((1+ X_test*X_train.T),(R_test*R_train.T))  #(m_t,m_d)		
 		m,n = K_test.shape			   # m = m_t, n = m_d
+
 		Cor_val = np.sqrt(np.multiply(np.tile(K_diag_test,(n,1)).T, # (m_t, m_d)
 							np.tile(K_diag_train,(m,1))))  # (m_t, m_d)
 		K_test = np.true_divide(K_test, Cor_val)  # (m_t,m_d)

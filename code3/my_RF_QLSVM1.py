@@ -258,10 +258,10 @@ class treeNode(object):
                 error_mse = errorL_mse + errorR_mse
                 error_reg = errorL_reg + errorR_reg
                 #print 'error_mse is ', error_mse
-                if error_mse < 0.7:
+                if error_mse < 1.0:
                     Error_mes, Error_reg = errType(dataMat[:,:-1],dataMat[:,-1], leafType)
                     print 'Error_mes is', Error_mes
-                    if Error_mes < 0.8:
+                    if Error_mes < 1.1:
                         print 'current subDataSet is approxmiately linear separable, do not split'
                         return None, leafType.fit(dataMat[:,:-1],dataMat[:,-1])
                     else:
