@@ -13,7 +13,7 @@ from sklearn.neighbors import NearestNeighbors
 
 SGDClf = linear_model.SGDClassifier(loss='modified_huber',penalty='l1')
 
-LogicReg = linear_model.LogisticRegression(penalty='l1', C=1.0, n_jobs=-1)
+LogicReg = linear_model.LogisticRegression(penalty='l1', C=1.0, n_jobs=4)
 
 RidgeReg = linear_model.Ridge(alpha=1.0)
 
@@ -234,7 +234,7 @@ class treeNode(object):
 
         for featIndex in featIndexes:
             featVal = np.unique(dataMat[:, featIndex])
-            for splitVal in np.random.choice(featVal, 0.6*len(featVal), replace=False):
+            for splitVal in np.random.choice(featVal, 0.5*len(featVal), replace=False):
                 leftMat, rightMat = self.binSplitData(dataMat, featIndex, splitVal)
                 if (leftMat.shape[0] < min_samples_split) or \
                     (rightMat.shape[0] < min_samples_split): 
@@ -246,8 +246,8 @@ class treeNode(object):
                 errorR_mse, errorR_reg = errType(rightMat[:, :-1], rightMat[:, -1], leafType)
                 error_mse = errorL_mse + errorR_mse
                 error_reg = errorL_reg + errorR_reg
-                print 'error_mse is ', error_mse
-                if error_mse < 0.1:
+                #print 'error_mse is ', error_mse
+                if error_mse < 0.17:
                     print 'current subDataSet is approxmiately linear separable, do not split'
                     return None, leafType.fit(dataMat[:,:-1],dataMat[:,-1])
                 else:
@@ -297,8 +297,8 @@ class treeNode(object):
             self.splitIndex = None
             self.splitValue = featVal # leaf node featVal is weights
             #self.parent.RInfo = self.parent.calc_R(self.parent.dataMat)
-            if not isinstance(self.splitValue, int):
-                self.RInfo = self.calc_R(self.dataMat)
+            #if not isinstance(self.splitValue, int):
+            self.RInfo = self.calc_R(self.dataMat)
         else:
             self.splitIndex = featId
             self.splitValue = featVal
