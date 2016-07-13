@@ -23,6 +23,9 @@ from sklearn.grid_search import GridSearchCV, RandomizedSearchCV
 from sklearn.metrics import classification_report
 
 
+import mpl_toolkits.mplot3d.axes3d as p3
+from sklearn.cluster import AgglomerativeClustering
+from sklearn.datasets.samples_generator import make_swiss_roll
 
 #======================== make sin data ===================================
 rng = np.random.RandomState(1)
@@ -70,6 +73,81 @@ ax = fig.add_subplot(111)
 ax.scatter(X[:, 0], X[:, 1], marker='o', c=Y)
 ax.axis('tight')
 
+
+#========================= make swiss roll data ============================
+# Generate data (swiss roll dataset)
+n_samples = 1500
+noise = 0.05
+X, t = make_swiss_roll(n_samples, noise)
+X[:, 1] *= .5
+
+from sklearn.neighbors import kneighbors_graph
+connectivity = kneighbors_graph(X, n_neighbors=10, include_self=False)
+ward = AgglomerativeClustering(n_clusters=6, connectivity=connectivity,
+                               linkage='ward').fit(X)
+label = ward.labels_
+Y= label
+fig = plt.figure()
+ax = p3.Axes3D(fig)
+ax.view_init(7, -80)
+for l in np.unique(label):
+    ax.plot3D(X[label == l, 0], X[label == l, 1], X[label == l, 2],
+              'o', color=plt.cm.jet(float(l) / np.max(label + 1)))
+
+
+Y  = np.where(Y==1, 1, 0)
+fig = plt.figure()
+ax = p3.Axes3D(fig)
+ax.plot3D(X[Y == 1, 0], X[Y == 1, 1], X[Y == 1, 2],
+          'o', color='c', alpha=0.5)
+ax.plot3D(X[Y == 0, 0], X[Y == 0, 1], X[Y == 0, 2],
+          'x', color='y', alpha=0.5)
+X_train, X_test, y_train, y_test = train_test_split(X, Y,
+                                            test_size=0.33, random_state=13)
+# ==================== trainning random forest ==========================
+myFore = my_RF_QLSVM.RF_QLSVM_clf(n_trees=1, 
+                    leafType='LogicReg', errType='lseErr_regul',
+                    max_depth=None, min_samples_split=5,
+                    max_features=None,bootstrap_data=False)
+myFore.fit(X_train, y_train)
+y_pred = myFore.RF_predict(X_test)
+y_pred = y_pred.reshape((-1,))
+
+fig = plt.figure()
+ax = p3.Axes3D(fig)
+ax.plot3D(X_test[y_pred == 1, 0], X_test[y_pred == 1, 1], 
+			X_test[y_pred == 1, 2], 'o', color='c')
+ax.plot3D(X_test[y_pred == 0, 0], X_test[y_pred == 0, 1], 
+			X_test[y_pred == 0, 2], 'x', color='c')
+
+RMat = np.array(myFore.trees[0].tree.get_RList())
+#RMat = np.array(myFore.get_RF_avgRList_byAggloCluster(0.5))
+kernel = ax.scatter(RMat[:,0,0], RMat[:,1,0], RMat[:,2,0] ,
+		marker='.', c='y', s=80, label='kernel data')
+
+ax.plot3D(X_train[y_train == 1, 0], X_train[y_train == 1, 1], X_train[y_train == 1, 2],
+          'o', color='r', alpha=0.3)
+ax.plot3D(X_train[y_train == 0, 0], X_train[y_train == 0, 1], X_train[y_train == 0, 2],
+          'x', color='b', alpha=0.3)
+ax.plot3D(X_test[y_test == 1, 0], X_test[y_test == 1, 1], X_test[y_test == 1, 2],
+          'o', color='r', alpha=0.3)
+ax.plot3D(X_test[y_test == 0, 0], X_test[y_test == 0, 1], X_test[y_test == 0, 2],
+          'o', color='b', alpha=0.3)
+myFore.trees[0].tree.getTreeStruc()
+
+
+from functools import partial
+RBFinfo = partial(get_Quasi_linear_Kernel.get_RBFinfo,RMat=RMat)
+Quasi_linear_kernel = partial(get_Quasi_linear_Kernel.get_KernelMatrix_basic,RMat=RMat)
+K_train = Quasi_linear_kernel(X_train,X_train)
+K_test = Quasi_linear_kernel(X_test,X_train)
+clf = svm.SVC(kernel='precomputed' , C=100)
+clf.fit(K_train, y_train)
+y_pred = clf.predict(K_test)
+ax.plot3D(X_test[y_pred == 1, 0], X_test[y_pred == 1, 1], 
+			X_test[y_pred == 1, 2], 'o', color='c')
+ax.plot3D(X_test[y_pred == 0, 0], X_test[y_pred == 0, 1], 
+			X_test[y_pred == 0, 2], 'x', color='c')
 #========================= training decision tree ==========================
 
 

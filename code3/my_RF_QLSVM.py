@@ -13,7 +13,7 @@ from sklearn.neighbors import NearestNeighbors
 
 SGDClf = linear_model.SGDClassifier(loss='modified_huber',penalty='l1')
 
-LogicReg = linear_model.LogisticRegression(penalty='l1', C=1.0, n_jobs=-1)
+LogicReg = linear_model.LogisticRegression(penalty='l1', C=1.0, n_jobs=4)
 
 RidgeReg = linear_model.Ridge(alpha=1.0)
 
@@ -68,17 +68,17 @@ def lseErr_regul(X, y, leafType, k=1):
             yHat = model.predict(X)
         yHat = yHat[:,1] # get predict is 1
 
-        # X1_mean = np.mean(X[y==1], axis=0)
-        # X0_mean = np.mean(X[y==0], axis=0)
+        X1_mean = np.mean(X[y==1], axis=0)
+        X0_mean = np.mean(X[y==0], axis=0)
 
-        # X1_delta = X[y==1] - X0_mean # (m,n)
-        # X0_delta = X[y==0] - X1_mean
+        X1_delta = X[y==1] - X0_mean # (m,n)
+        X0_delta = X[y==0] - X1_mean
 
         #X1_delta = X[y==1] - X1_mean # (m,n)
         #X0_delta = X[y==0] - X0_mean
-        #X_delta2 = np.r_[X1_delta, X0_delta]
+        X_delta = np.r_[X1_delta, X0_delta]
         
-        X_delta = X - np.mean(X, axis=0)
+        #X_delta = X - np.mean(X, axis=0)
 
         error_mse = np.sum(np.power(y - yHat, 2)) / len(yHat)
         error_reg = k * np.sum(np.power(X_delta, 2)) /len(yHat)
@@ -235,7 +235,7 @@ class treeNode(object):
 
         for featIndex in featIndexes:
             featVal = np.unique(dataMat[:, featIndex])
-            for splitVal in np.random.choice(featVal, 0.3*len(featVal), replace=False):
+            for splitVal in np.random.choice(featVal, 0.5*len(featVal), replace=False):
                 leftMat, rightMat = self.binSplitData(dataMat, featIndex, splitVal)
                 if (leftMat.shape[0] < min_samples_split) or \
                     (rightMat.shape[0] < min_samples_split): 
@@ -247,16 +247,15 @@ class treeNode(object):
                 error_mse = errorL_mse + errorR_mse
                 error_reg = errorL_reg + errorR_reg
                 #print 'error_mse is ', error_mse
+                newError = error_mse + error_reg
                 if error_mse < .1:
                     Error_mes, Error_reg = errType(dataMat[:,:-1],dataMat[:,-1], leafType)
                     print 'Error_mes is', Error_mes
-                    if Error_mes < 0.15:
+                    if Error_mes < 0.12:
                         print 'current subDataSet is approxmiately linear separable, do not split'
                         return None, leafType.fit(dataMat[:,:-1],dataMat[:,-1])
-                    else:
-                        print 'oneside mse is less than threshold, but whole dataMat can not fit linear model well'
-                else:
-                    newError = error_mse + error_reg
+                    # else:
+                    #     print 'oneside mse is less than threshold, but whole dataMat can not fit linear model well'
 
                 if newError < bestError:
                     bestIndex = featIndex
@@ -759,7 +758,7 @@ class RF_QLSVM_clf(object):
         # get the number of cluster
         avg_num_R = int( RF_R_Mat.shape[0] /len(trees))  # total R divided by number trees
         # get the connectivity graph of R_list
-        connect_graph = kneighbors_graph(RF_R_centers, n_neighbors=int(.3*(len(trees))+1), include_self=False)
+        connect_graph = kneighbors_graph(RF_R_centers, n_neighbors=int(.7*(len(trees))), include_self=False)
         # connect_graph shape = (m,m) , if neibor then value=1, else=0
         
         if isinstance(cluster_ratio, float):

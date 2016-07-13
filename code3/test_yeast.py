@@ -93,12 +93,12 @@ X = data['data'] ; Y = data['target']
 
 
 data = scipy.io.loadmat('yeast.mat')
-X_train = data['X1'] ; y_train = data['Ytrain'] ; y_train = y_train[:,15]
-X_test = data['Xt']; y_test = data['Ytest']; y_test = y_test[:,15]
+X_train = data['X1'] ; y_train = data['Ytrain'] ; y_train = y_train[:,9]
+X_test = data['Xt']; y_test = data['Ytest']; y_test = y_test[:,9]
 X = np.r_[X_train, X_test]; Y = np.r_[y_train, y_test]
 
-X1 ,X2 = get_boundary(X_train, y_train,n_neighbors=6,radius=0.5)
-X_train = X1[:,:-1] ; y_train = X1[:,-1]
+X1 ,X2 = get_boundary(X_train, y_train,n_neighbors=6,radius=1)
+X_train = X1[:,:-1] ; y_train = X1[:,-1]; y_train = np.array(map(int,y_train))
 #X = data['X']; Y = data['Y']
 #Y = Y[:,2]
 # L2 normalization
@@ -111,7 +111,7 @@ X_test = X_test / np.tile(np.sqrt(np.sum(X_test*X_test,axis=1)),(436,1)).transpo
 skf = cross_validation.StratifiedKFold(y_train, n_folds=3, shuffle=True,random_state=13)
 n_iter_search = 200
 random_search = RandomizedSearchCV(svm.SVC(), 
-					param_distributions=RBF_SVM_param_dist,
+					param_distributions=Linear_SVM_param_dist,
                                    n_iter=n_iter_search, n_jobs=4, 
                                    cv=skf, scoring='f1')
 start = time()
@@ -122,11 +122,11 @@ print("Random_search Best estimator is :\n"), random_search.best_estimator_
 report(random_search.grid_scores_,n_top=5)
 
 C = random_search.best_params_['C']
-gamma = random_search.best_params_['gamma']
+#gamma = random_search.best_params_['gamma']
 kernel = random_search.best_params_['kernel']
 
-clf = svm.SVC(kernel=kernel, C=C, gamma=gamma)
-#clf = svm.SVC(kernel=kernel, C=C)
+#clf = svm.SVC(kernel=kernel, C=C, gamma=gamma)
+clf = svm.SVC(kernel=kernel, C=C)
 clf.fit(X_train, y_train)
 y_pred = clf.predict(X_test)
 
