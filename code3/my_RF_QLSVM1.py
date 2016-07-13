@@ -13,7 +13,7 @@ from sklearn.neighbors import NearestNeighbors
 
 SGDClf = linear_model.SGDClassifier(loss='modified_huber',penalty='l1')
 
-LogicReg = linear_model.LogisticRegression(penalty='l1', C=10.0, n_jobs=4)
+LogicReg = linear_model.LogisticRegression(penalty='l1', C=1.0, n_jobs=4)
 
 RidgeReg = linear_model.Ridge(alpha=1.0)
 
@@ -319,8 +319,8 @@ class treeNode(object):
             if not isinstance(self.splitValue, int):
                 self.RInfo = self.calc_R(self.dataMat)
                 if self is self.parent.rightChild:
-                    leafChild = self.parent.leftChild
-                    if isinstance(leftChild.splitVal, int):
+                    leftChild = self.parent.leftChild
+                    if isinstance(leftChild.splitValue, int):
                         print 'This is rightchild ( a model), and leftChild is pure class, leftChild get RInfo...'
                         leftChild.Rinfo = leftChild.calc_R(leftChild.dataMat)
         else:
