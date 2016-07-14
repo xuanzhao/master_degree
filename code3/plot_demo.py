@@ -62,6 +62,92 @@ ax.scatter(X[:,0], X[:,1], c=Y)
 ax.axis('tight')
 #legend([pos, neg], ['positive sample', 'negative sample'])
 
+
+# =================== make imbalance data =================================
+N2 = 200;
+X2 = 10*np.random.rand(N2, 2) - 5;
+y2 = np.zeros((N2, 1)) - 1;
+# y2[(X2[:, 0]**3 + X2[:, 0]**2 + X2[:, 0]+1)/40 > X2[:, 1]] = 1;
+y2[ np.logical_and(X2[:,0]<-3, X2[:,1]<-3)] = 1
+fig= plt.figure()
+ax = fig.add_subplot(111)
+ax.scatter(X2[:,0], X2[:,1], c=y2)
+
+pos_ratio = (y2==-1).sum() / len(y2)
+neg_ratio = (y2==1).sum() / len(y2)
+ind = np.where(y2==1)[0]
+w_X2 = np.r_[pos_ratio * X2[ind], neg_ratio * X2[~ind]]
+
+X_mean = np.mean(w_X2, axis=0)
+kernel = ax.scatter(X_mean[0], X_mean[1], c='y', s=80)
+
+# =================== make cross data =================================
+N = 400;
+X = 10*np.random.rand(N, 2) - 5;
+Y = np.zeros((N, 1));
+# y2[(X2[:, 0]**3 + X2[:, 0]**2 + X2[:, 0]+1)/40 > X2[:, 1]] = 1;
+down = -4; up = -2
+while(up<7.0):
+	left = -4; right = -2
+	Y[ np.logical_and(np.logical_and(X[:,0]>left,X[:,0]<right),
+					np.logical_and(X[:,1]>down,X[:,1]<up))] = 1
+	while(right<7.0):
+		Y[ np.logical_and(np.logical_and(X[:,0]>left,X[:,0]<right),
+						np.logical_and(X[:,1]>down,X[:,1]<up))] = 1
+		left +=4; right +=4
+	down +=4; up +=4
+fig= plt.figure()
+ax = fig.add_subplot(111)
+ind_pos = np.where(Y==1)[0]
+ind_neg = np.where(Y==0)[0]
+pos = ax.scatter(X[ind_pos,0], X[ind_pos,1], c='red' , label='pos data')
+neg = ax.scatter(X[ind_neg,0], X[ind_neg,1], c='blue' , label='neg data')
+ax.axis('tight')
+
+# X_train, X_test, y_train, y_test = train_test_split(X, Y,
+#                                             test_size=0.33, random_state=13)
+myFore = my_RF_QLSVM1.RF_QLSVM_clf(n_trees=1, 
+                    leafType='LogicReg', errType='lseErr_regul',
+                    max_depth=None, min_samples_split=5,
+                    max_features=None,bootstrap_data=False)
+myFore.fit(X, Y)
+y_pred = myFore.RF_predict(X)
+y_pred = y_pred.reshape((-1,))
+
+fig= plt.figure()
+ax = fig.add_subplot(111)
+ax.scatter(X[y_pred == 1, 0], X[y_pred == 1, 1], 
+			  color='r', label='predict pos')
+ax.scatter(X[y_pred == 0, 0], X[y_pred == 0, 1], 
+			  color='b', label='predict neg')
+ax.axis('tight')
+plt.title('5 decision trees predict result')
+
+
+#RMat = np.array(myFore.trees[0].tree.get_RList())
+RMat = np.array(myFore.get_RF_avgRList_byAggloCluster(0.1))
+kernel = ax.scatter(RMat[:,0,0], RMat[:,1,0],
+		marker='.', c='y', s=140, label='clusterd kernel data', alpha=0.7)
+ax.legend()
+
+from functools import partial
+RBFinfo = partial(get_Quasi_linear_Kernel.get_RBFinfo,RMat=RMat)
+Quasi_linear_kernel = partial(get_Quasi_linear_Kernel.get_KernelMatrix_basic,RMat=RMat)
+K_train = Quasi_linear_kernel(X,X)
+K_test = Quasi_linear_kernel(X,X)
+clf = svm.SVC(kernel='precomputed' , C=1000)
+clf.fit(K_train, Y)
+y_pred = clf.predict(K_test)
+fig = plt.figure()
+ax = fig.add_subplot(111)
+ax.scatter(X[y_pred == 1, 0], X[y_pred == 1, 1], 
+			  color='r', label='predict pos')
+ax.scatter(X[y_pred == 0, 0], X[y_pred == 0, 1], 
+			  color='b', label='predict neg')
+ax.axis('tight')
+ax.legend()
+plt.title('Quasi_Linear SVM predict result')
+
 #========================= make gaussian data ==============================
 plt.title("Gaussian divided into three quantiles", fontsize='small')
 X, Y = make_gaussian_quantiles(n_samples=500,n_features=2, n_classes=2, 
@@ -87,6 +173,7 @@ ward = AgglomerativeClustering(n_clusters=6, connectivity=connectivity,
                                linkage='ward').fit(X)
 label = ward.labels_
 Y= label
+plt.style.use('ggplot')
 fig = plt.figure()
 ax = p3.Axes3D(fig)
 ax.view_init(7, -80)
@@ -99,9 +186,9 @@ Y  = np.where(Y==1, 1, 0)
 fig = plt.figure()
 ax = p3.Axes3D(fig)
 ax.plot3D(X[Y == 1, 0], X[Y == 1, 1], X[Y == 1, 2],
-          'o', color='c', alpha=0.5)
+          'o', color='r', alpha=0.5, label='pos data')
 ax.plot3D(X[Y == 0, 0], X[Y == 0, 1], X[Y == 0, 2],
-          'x', color='y', alpha=0.5)
+          'x', color='b', alpha=0.5, label='neg data')
 X_train, X_test, y_train, y_test = train_test_split(X, Y,
                                             test_size=0.33, random_state=13)
 # ==================== trainning random forest ==========================
@@ -116,14 +203,14 @@ y_pred = y_pred.reshape((-1,))
 fig = plt.figure()
 ax = p3.Axes3D(fig)
 ax.plot3D(X_test[y_pred == 1, 0], X_test[y_pred == 1, 1], 
-			X_test[y_pred == 1, 2], 'o', color='c')
+			X_test[y_pred == 1, 2], 'o', color='c', label='predict pos')
 ax.plot3D(X_test[y_pred == 0, 0], X_test[y_pred == 0, 1], 
-			X_test[y_pred == 0, 2], 'x', color='c')
+			X_test[y_pred == 0, 2], 'x', color='c', label='predict neg')
 
-RMat = np.array(myFore.trees[0].tree.get_RList())
-#RMat = np.array(myFore.get_RF_avgRList_byAggloCluster(0.5))
+# RMat = np.array(myFore.trees[0].tree.get_RList())
+RMat = np.array(myFore.get_RF_avgRList_byAggloCluster(0.5))
 kernel = ax.scatter(RMat[:,0,0], RMat[:,1,0], RMat[:,2,0] ,
-		marker='.', c='y', s=80, label='kernel data')
+		marker='.', c='y', s=140, label='clusterd kernel data')
 
 ax.plot3D(X_train[y_train == 1, 0], X_train[y_train == 1, 1], X_train[y_train == 1, 2],
           'o', color='r', alpha=0.3)
@@ -132,7 +219,7 @@ ax.plot3D(X_train[y_train == 0, 0], X_train[y_train == 0, 1], X_train[y_train ==
 ax.plot3D(X_test[y_test == 1, 0], X_test[y_test == 1, 1], X_test[y_test == 1, 2],
           'o', color='r', alpha=0.3)
 ax.plot3D(X_test[y_test == 0, 0], X_test[y_test == 0, 1], X_test[y_test == 0, 2],
-          'o', color='b', alpha=0.3)
+          'x', color='b', alpha=0.3)
 myFore.trees[0].tree.getTreeStruc()
 
 
@@ -144,10 +231,12 @@ K_test = Quasi_linear_kernel(X_test,X_train)
 clf = svm.SVC(kernel='precomputed' , C=100)
 clf.fit(K_train, y_train)
 y_pred = clf.predict(K_test)
+fig = plt.figure()
+ax = p3.Axes3D(fig)
 ax.plot3D(X_test[y_pred == 1, 0], X_test[y_pred == 1, 1], 
-			X_test[y_pred == 1, 2], 'o', color='c')
+			X_test[y_pred == 1, 2], 'o', color='c', label= 'predict pos')
 ax.plot3D(X_test[y_pred == 0, 0], X_test[y_pred == 0, 1], 
-			X_test[y_pred == 0, 2], 'x', color='c')
+			X_test[y_pred == 0, 2], 'x', color='c', label= 'predict neg')
 #========================= training decision tree ==========================
 
 

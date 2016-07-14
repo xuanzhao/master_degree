@@ -217,7 +217,7 @@ class treeNode(object):
             if self.parent.rightChild is self:
                 leftChild = self.parent.leftChild
                 if isinstance(leftChild.splitValue, int):
-                    if leftChild.splitValue != rightChild.splitValue:
+                    if leftChild.splitValue != self.splitValue:
                         print 'two pair of leftNode is different class data, get RInfo...'
                         self.RInfo = self.calc_R(self.dataMat)
                         leftChild.Rinfo = leftChild.calc_R(leftChild.dataMat)
@@ -362,11 +362,25 @@ class treeNode(object):
         return self
 
     def calc_R(self,dataMat):
-        X = (dataMat[:,:-1])
-        X_mean = np.mean(X, axis=0)
-        X_radius = np.std(X, axis=0)
-        RInfo = np.c_[X_mean, X_radius] 
-        #RInfo = {'X_mean':X_mean, 'X_radius':X_radius} 
+        X = (dataMat[:,:-1]); y = (dataMat[:, -1])
+        clas = np.unique(y)
+        if len(clas) != 1:
+            print '---this Node is has two class to cluster :', clas
+            print 'using weight data to calc_R...'
+            pos_ratio = (y==0).sum() / len(y)
+            neg_ratio = (y==1).sum() / len(y)
+            ind = np.where(y==1)[0]
+            w_X = np.r_[pos_ratio * X[ind], neg_ratio * X[~ind]]
+            
+            X_mean = np.mean(w_X, axis=0)
+            X_radius = np.std(w_X, axis=0)
+            RInfo = np.c_[X_mean, X_radius] 
+            #RInfo = {'X_mean':X_mean, 'X_radius':X_radius} 
+        else:
+            print '---this Node is pure class :', clas
+            X_mean = np.mean(X, axis=0)
+            X_radius = np.std(X, axis=0)
+            RInfo = np.c_[X_mean, X_radius] 
         return RInfo   # (n, 2), col0=center, col1=radius
 
     def get_RList(self):
