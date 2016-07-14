@@ -61,18 +61,30 @@ def report(grid_scores, n_top=5):
         print("Parameters: {0}".format(score.parameters))
         print("")
 
-def standardize_KernelMat(KernelMat):
-	m,n = KernelMat.shape
-	#std_K = np.zeros_like(KernelMat,dtype=float)
-	std_K = np.zeros((m,n)) 
-	for i in np.arange(0,m):
-		for j in np.arange(i,m):
-			cor_val = np.sqrt(KernelMat[i,i] * KernelMat[j,j])
-			std_K[i,j] = np.true_divide(KernelMat[i,j], cor_val)
-			if i != j:
-				std_K[j,i] = std_K[i,j]
+def get_boundary(X, y,n_neighbors=8,radius=0.5):
 
-	return std_K
+    neigh = NearestNeighbors(n_neighbors=n_neighbors, radius=radius, n_jobs=4)
+    neigh.fit(X)
+
+    boundary_points = []
+    nonBoundary_points = []
+
+    X = np.array(X); y = np.array(y)
+    m,n = X.shape
+
+    for i in np.arange(m):
+        x = X[i,:].reshape(1,-1)
+        neigh_ind = neigh.kneighbors(x, 8, return_distance=False)
+        x = np.c_[x, y[i].reshape(-1,1)]
+        if len(np.unique(y[neigh_ind])) > 1: # x is boundary point
+            boundary_points.append(x)
+        else: # x is not boundary point
+            nonBoundary_points.append(x)
+
+    data_bound = np.array(boundary_points).reshape(len(boundary_points),n+1)
+    data_nonBound = np.array(nonBoundary_points).reshape(len(nonBoundary_points),n+1)
+
+    return data_bound, data_nonBound
 
 # ========================== import real data ===========================
 data = scipy.io.loadmat('breastdata.mat')
@@ -151,6 +163,17 @@ myFore = my_RF_QLSVM.RF_QLSVM_clf(n_trees=30,
 myFore.fit(X_train, y_train)
 end = time() - start
 print 'done training randomforest, ues time %f hours\n' % (end/60/60)
+
+y_pred = myFore.RF_predict(X_test)
+precision = metrics.precision_score(y_test, y_pred)
+recall = metrics.recall_score(y_test, y_pred)
+f1 = metrics.f1_score(y_test, y_pred)
+print '*'*100, 'current randomforest test result :', '*'*100,'\n'
+print 'precision_score :', precision
+print 'recall_score :', recall
+print 'f1_score :', f1 
+print '*'*200,'\n'
+RF_predict = np.array([precision, recall, f1])
 
 for i, ratio in enumerate(np.arange(.1,1.0,0.05)):
 	RMat = np.array(myFore.get_RF_avgRList_byAggloCluster(ratio))
