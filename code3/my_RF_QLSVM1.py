@@ -218,9 +218,10 @@ class treeNode(object):
                 leftChild = self.parent.leftChild
                 if isinstance(leftChild.splitValue, int):
                     if leftChild.splitValue != self.splitValue:
-                        print 'two pair of leftNode is different class data, get RInfo...'
+                        print 'two pair of leatNode is different class data, get RInfo...'
                         self.RInfo = self.calc_R(self.dataMat)
                         leftChild.Rinfo = leftChild.calc_R(leftChild.dataMat)
+                    else: print 'two pair of leafNode is same class, do not get RInfo'
                 elif isinstance(leftChild.splitValue, float):
                     print 'This is rightNode, leftChild is splitNode, get RInfo at rightNode...'
                     self.RInfo = self.calc_R(self.dataMat)
@@ -260,10 +261,10 @@ class treeNode(object):
                 error_reg = errorL_reg + errorR_reg
                 #print 'error_mse is ', error_mse
                 newError = error_mse + error_reg
-                if error_mse < .1:
+                if error_mse < .04:
                     Error_mes, Error_reg = errType(dataMat[:,:-1],dataMat[:,-1], leafType)
-                    #print 'Error_mes is', Error_mes
-                    if Error_mes < 0.1:
+                    if Error_mes < 0.035:
+                        print 'Error_mes is', Error_mes
                         print 'current subDataSet is approxmiately linear separable, do not split'
                         return None, leafType.fit(dataMat[:,:-1],dataMat[:,-1])
                     #else:
@@ -363,7 +364,7 @@ class treeNode(object):
 
     def calc_R(self,dataMat):
         X = (dataMat[:,:-1]); y = (dataMat[:, -1])
-        clas = np.unique(y)
+        clas = map(int, np.unique(y))
         if len(clas) != 1:
             print '---this Node is has two class to cluster :', clas
             print 'using weight data to calc_R...'
@@ -580,7 +581,7 @@ class DecisionTreeRegresion(object):
         """
         # --------------------- set tree attributes by input data--
         self.n_outputs, self.n_features = X.shape
-        self.classes = np.unique(y)
+        self.classes = map(int, np.unique(y))
 
         # ===================== Build tree =======================
         

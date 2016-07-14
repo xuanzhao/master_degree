@@ -342,7 +342,7 @@ class treeNode(object):
 
     def calc_R(self,dataMat):
         X = (dataMat[:,:-1]); y = (dataMat[:, -1])
-        clas = np.unique(y)
+        clas = map(int, np.unique(y))
         if len(clas) != 1:
             print '---this Node is has two class to cluster :', clas
             print 'using weight data to calc_R...'
@@ -559,7 +559,7 @@ class DecisionTreeRegresion(object):
         """
         # --------------------- set tree attributes by input data--
         self.n_outputs, self.n_features = X.shape
-        self.classes = np.unique(y)
+        self.classes = map(int, np.unique(y))
 
         # ===================== Build tree =======================
         
