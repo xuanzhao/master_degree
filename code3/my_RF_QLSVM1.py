@@ -28,6 +28,13 @@ IsotonicReg = IsotonicRegression(y_min=None, y_max=None, increasing=True,
                                  out_of_bounds='nan')
 
 
+def createCLF(model):
+    paras = model.get_params()
+    C = paras['C']
+    penalty = paras['penalty']
+    return linear_model.LogisticRegression(C=C, penalty=penalty)
+
+
 def lseErr(X, y, leafType):
 
     if len(np.unique(y)) != 1:
@@ -218,9 +225,10 @@ class treeNode(object):
                 leftChild = self.parent.leftChild
                 if isinstance(leftChild.splitValue, int):
                     if leftChild.splitValue != self.splitValue:
-                        print 'two pair of leatNode is different class data, get RInfo...'
-                        self.RInfo = self.calc_R(self.dataMat)
-                        leftChild.Rinfo = leftChild.calc_R(leftChild.dataMat)
+                        print 'two pair of leatNode is different class data, get RInfo at parentNode...'
+                        self.parent.RInfo = self.parent.calc_R(self.parent.dataMat)
+                        # self.RInfo = self.calc_R(self.dataMat)
+                        # leftChild.RInfo = leftChild.calc_R(leftChild.dataMat)
                     else: print 'two pair of leafNode is same class, do not get RInfo'
                 elif isinstance(leftChild.splitValue, float):
                     print 'This is rightNode, leftChild is splitNode, get RInfo at rightNode...'
@@ -234,7 +242,8 @@ class treeNode(object):
                 print 'here fit the max_depth:', self.selfDepth
                 # print 'the leafType return model'
                 # print '---------------------------------------------------\n'
-                return None, leafType.fit(dataMat[:,:-1],dataMat[:,-1])
+                clf = createCLF(leafType)
+                return None, clf.fit(dataMat[:,:-1],dataMat[:,-1])
 
         # get the feature index for split
         featIndexes = bagForFeatures(max_features, n_features)
@@ -261,12 +270,13 @@ class treeNode(object):
                 error_reg = errorL_reg + errorR_reg
                 #print 'error_mse is ', error_mse
                 newError = error_mse + error_reg
-                if error_mse < .04:
+                if error_mse < .07:
                     Error_mes, Error_reg = errType(dataMat[:,:-1],dataMat[:,-1], leafType)
-                    if Error_mes < 0.035:
+                    if Error_mes < 0.1:
                         print 'Error_mes is', Error_mes
                         print 'current subDataSet is approxmiately linear separable, do not split'
-                        return None, leafType.fit(dataMat[:,:-1],dataMat[:,-1])
+                        clf = createCLF(leafType)
+                        return None, clf.fit(dataMat[:,:-1],dataMat[:,-1])
                     #else:
                         #print 'oneside mse is less than threshold, but whole dataMat can not fit linear model well'
 
@@ -289,7 +299,8 @@ class treeNode(object):
             print 'the total number of sample is ', self.n_samples
             # print 'the leafType return model'
             # print '---------------------------------------------------\n'
-            return None, leafType.fit(dataMat[:,:-1],dataMat[:,-1])
+            clf = createCLF(leafType)
+            return None, clf.fit(dataMat[:,:-1],dataMat[:,-1])
 
         print '************ find bestSplit do return ***************\n'
         print 'bestIndex : ',bestIndex, 'bestValue :', bestValue
@@ -368,11 +379,8 @@ class treeNode(object):
         if len(clas) != 1:
             print '---this Node is has two class to cluster :', clas
             print 'using weight data to calc_R...'
-            pos_ratio = (y==0).sum() / len(y)
-            neg_ratio = (y==1).sum() / len(y)
-            ind = np.where(y==1)[0]
-            w_X = np.r_[pos_ratio * X[ind], neg_ratio * X[~ind]]
-            
+            ind1 = np.where(y==1)[0]
+            w_X = np.r_[X[ind1], X[~ind1]]
             X_mean = np.mean(w_X, axis=0)
             X_radius = np.std(w_X, axis=0)
             RInfo = np.c_[X_mean, X_radius] 
