@@ -405,7 +405,7 @@ class treeNode(object):
             if isinstance(splitValue, int):
                 print indent + 'leaf node: ', splitValue
             else:
-                print indent + 'leaf node: ', (splitValue.coef_)
+                print indent + 'leaf node: ', type(splitValue)
 
 
 
