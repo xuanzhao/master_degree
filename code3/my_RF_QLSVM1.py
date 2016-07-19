@@ -270,9 +270,9 @@ class treeNode(object):
                 error_reg = errorL_reg + errorR_reg
                 #print 'error_mse is ', error_mse
                 newError = error_mse + error_reg
-                if error_mse < .07:
+                if error_mse < .04:
                     Error_mes, Error_reg = errType(dataMat[:,:-1],dataMat[:,-1], leafType)
-                    if Error_mes < 0.1:
+                    if Error_mes < 0.04:
                         print 'Error_mes is', Error_mes
                         print 'current subDataSet is approxmiately linear separable, do not split'
                         clf = createCLF(leafType)
@@ -379,10 +379,18 @@ class treeNode(object):
         if len(clas) != 1:
             print '---this Node is has two class to cluster :', clas
             print 'using weight data to calc_R...'
-            ind1 = np.where(y==1)[0]
-            w_X = np.r_[X[ind1], X[~ind1]]
-            X_mean = np.mean(w_X, axis=0)
-            X_radius = np.std(w_X, axis=0)
+            # ind1 = np.where(y==1)[0]
+            # ind0 = np.where(y==0)[0]
+            # if len(ind1)<len(ind0):
+            #     ind0 = np.random.choice(ind0, len(ind1), replace=False)            
+
+            # W_X = np.r_[X[ind1], X[ind0]]
+
+            # X_mean = np.mean(W_X, axis=0)
+            # X_radius =np.std(W_X, axis=0)
+
+            X_mean = np.mean(X, axis=0)
+            X_radius = np.std(X, axis=0)
             RInfo = np.c_[X_mean, X_radius] 
             #RInfo = {'X_mean':X_mean, 'X_radius':X_radius} 
         else:
@@ -800,7 +808,7 @@ class RF_QLSVM_clf(object):
         RF_R_radius = RF_R_Mat[:,:,1]   # (m,n)
 
         # get the number of cluster
-        avg_num_R = int(RF_R_Mat.shape[0])  # total R divided by number trees
+        avg_num_R = int( RF_R_Mat.shape[0] /len(trees))  # total R divided by number trees
         # get the connectivity graph of R_list
         connect_graph = kneighbors_graph(RF_R_centers, n_neighbors=int(0.7*len(trees)), include_self=False)
         # connect_graph shape = (m,m) , if neibor then value=1, else=0

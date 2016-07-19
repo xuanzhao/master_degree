@@ -65,22 +65,27 @@ ax.axis('tight')
 
 # =================== make imbalance data =================================
 N2 = 200;
-X2 = 10*np.random.rand(N2, 2) - 5;
-y2 = np.zeros((N2, 1));
+X = 10*np.random.rand(N2, 2) - 5;
+y = np.zeros((N2, 1));
 # y2[(X2[:, 0]**3 + X2[:, 0]**2 + X2[:, 0]+1)/40 > X2[:, 1]] = 1;
-y2[ np.logical_and(X2[:,0]<-3, X2[:,1]<-3)] = 1
+y[ np.logical_and(X[:,0]<-3, X[:,1]<-3)] = 1
 fig= plt.figure()
 ax = fig.add_subplot(111)
-ax.scatter(X2[:,0], X2[:,1], c=y2)
+ax.scatter(X[:,0], X[:,1], c=y)
 
-pos_ratio = (y2==0).sum() / len(y2)
-neg_ratio = (y2==1).sum() / len(y2)
-ind = np.where(y2==1)[0]
-w_X2 = np.r_[pos_ratio * X2[ind], neg_ratio * X2[~ind]]
+ind1 = np.where(y==1)[0]
+ind0 = np.where(y==0)[0]
+ind0 = np.random.choice(ind0, len(ind1), replace=False)
 
-X_mean = np.mean(w_X2, axis=0)
+W_X = np.r_[X[ind1], X[ind0]]
+
+X_mean = np.mean(W_X, axis=0)
+X_radius =np.std(W_X, axis=0)
+X_radiuss= np.std(X,axis=0)
 kernel = ax.scatter(X_mean[0], X_mean[1], c='y', s=80)
 
+print X_mean, X_radius, X_radiuss
+plt.show()
 # =================== make cross data =================================
 N = 400;
 X = 10*np.random.rand(N, 2) - 5;
