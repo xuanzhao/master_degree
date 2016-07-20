@@ -60,7 +60,7 @@ def lseErr(X, y, leafType):
         return 0.0
 
 
-def lseErr_regul(X, y, leafType, k1=1,k2=0):
+def lseErr_regul(X, y, leafType, k1=0,k2=1):
     if len(np.unique(y)) != 1:
         model = leafType
         model.fit(X, y)
@@ -270,9 +270,9 @@ class treeNode(object):
                 error_reg = errorL_reg + errorR_reg
                 #print 'error_mse is ', error_mse
                 newError = error_mse + error_reg
-                if error_mse < .033:
+                if error_mse < .06:
                     Error_mes, Error_reg = errType(dataMat[:,:-1],dataMat[:,-1], leafType)
-                    if Error_mes < 0.035:
+                    if Error_mes < 0.06:
                         print 'Error_mes is', Error_mes
                         print 'current subDataSet is approxmiately linear separable, do not split'
                         clf = createCLF(leafType)
@@ -389,8 +389,14 @@ class treeNode(object):
             # X_mean = np.mean(W_X, axis=0)
             # X_radius =np.std(W_X, axis=0)
 
-            X_mean = np.mean(X, axis=0)
-            X_radius = np.std(X, axis=0)
+            X1_mean = np.mean(X[y==1], axis=0)
+            X0_mean = np.mean(X[y==0], axis=0)
+
+            X_mean = np.mean(np.r_[X1_mean, X0_mean], axis=0)
+            X_radius = np.std(np.r_[X1_mean, X0_mean], axis=0)
+
+            # X_mean = np.mean(X, axis=0)
+            # X_radius = np.std(X, axis=0)
             RInfo = np.c_[X_mean, X_radius] 
             #RInfo = {'X_mean':X_mean, 'X_radius':X_radius} 
         else:

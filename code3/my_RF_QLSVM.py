@@ -365,8 +365,14 @@ class treeNode(object):
             # X_mean = np.mean(W_X, axis=0)
             # X_radius =np.std(W_X, axis=0)
 
-            X_mean = np.mean(X, axis=0)
-            X_radius = np.std(X, axis=0)
+            X1_mean = np.mean(X[y==1], axis=0)
+            X0_mean = np.mean(X[y==0], axis=0)
+
+            X_mean = np.mean(np.r_[X1_mean, X0_mean], axis=0)
+            X_radius = np.std(np.r_[X1_mean, X0_mean], axis=0)
+
+            # X_mean = np.mean(X, axis=0)
+            # X_radius = np.std(X, axis=0)
             RInfo = np.c_[X_mean, X_radius] 
             #RInfo = {'X_mean':X_mean, 'X_radius':X_radius} 
         else:

@@ -105,14 +105,20 @@ X = data['data'] ; Y = data['target']
 
 
 data = scipy.io.loadmat('yeast.mat')
-X_train = data['X1'] ; y_train = data['Ytrain'] ; y_train = y_train[:,9]
-X_test = data['Xt']; y_test = data['Ytest']; y_test = y_test[:,9]
+X_train = data['X1'] ; y_train = data['Ytrain'] ; y_train = y_train[:,16]
+X_test = data['Xt']; y_test = data['Ytest']; y_test = y_test[:,16]
 X = np.r_[X_train, X_test]; Y = np.r_[y_train, y_test]
 
 X1 ,X2 = get_boundary(X_train, y_train,n_neighbors=6,radius=1)
 X_train = X1[:,:-1] ; y_train = X1[:,-1]; y_train = np.array(map(int,y_train))
 #X = data['X']; Y = data['Y']
 #Y = Y[:,2]
+
+# Standard normalization
+from sklearn.preprocessing import StandardScaler
+stder = StandardScaler()
+X_train = stder.fit_transform(X_train)
+X_test = stder.transform(X_test)
 # L2 normalization
 X_train = Normalizer(norm='l2').fit_transform(X_train)
 X_test = Normalizer(norm='l2').fit_transform(X_test)
@@ -156,7 +162,7 @@ num_R = {}
 # training randomforest
 print 'start training randomforest\n'
 start = time()
-myFore = my_RF_QLSVM.RF_QLSVM_clf(n_trees=30, 
+myFore = my_RF_QLSVM.RF_QLSVM_clf(n_trees=10, 
                     leafType='LogicReg', errType='lseErr_regul',
                     max_depth=None, min_samples_split=5,
                     max_features='log2',bootstrap_data=True)
@@ -175,7 +181,7 @@ print 'f1_score :', f1
 print '*'*200,'\n'
 RF_predict = np.array([precision, recall, f1])
 
-for i, ratio in enumerate(np.arange(.1,1.0,0.05)):
+for i, ratio in enumerate(np.arange(.5,1.0,0.1)):
 	RMat = np.array(myFore.get_RF_avgRList_byAggloCluster(ratio))
 	RBFinfo = partial(get_Quasi_linear_Kernel.get_RBFinfo,RMat=RMat)
 	Quasi_linear_kernel = partial(get_Quasi_linear_Kernel.get_KernelMatrix,RMat=RMat)
