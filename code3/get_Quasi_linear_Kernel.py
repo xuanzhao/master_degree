@@ -1,6 +1,6 @@
 import numpy as np
 
-def get_RBFinfo(X, RMat, lamb=2):
+def get_RBFinfo(X, RMat, lamb=1):
 	# because we have #k center, so the R should be size (m,k)
 	print 'RMat shape is ', RMat.shape
 	X = np.mat(X)
