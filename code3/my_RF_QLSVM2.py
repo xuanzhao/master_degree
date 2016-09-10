@@ -60,7 +60,7 @@ def lseErr(X, y, leafType):
         return 0.0
 
 
-def lseErr_regul(X, y, leafType, k1=0.5,k2=0):
+def lseErr_regul(X, y, leafType, k1=0,k2=2):
     if len(np.unique(y)) != 1:
         model = leafType
         model.fit(X, y)
@@ -256,7 +256,7 @@ class treeNode(object):
 
         for featIndex in featIndexes:
             featVal = np.unique(dataMat[:, featIndex])
-            for splitVal in np.random.choice(featVal, 0.5*len(featVal), replace=False):
+            for splitVal in np.random.choice(featVal, 0.6*len(featVal), replace=False):
                 leftMat, rightMat = self.binSplitData(dataMat, featIndex, splitVal)
                 if (leftMat.shape[0] < min_samples_split) or \
                     (rightMat.shape[0] < min_samples_split): 

@@ -60,7 +60,7 @@ def lseErr(X, y, leafType):
         return 0.0
 
 
-def lseErr_regul(X, y, leafType, k1=0,k2=1):
+def lseErr_regul(X, y, leafType, k1=0,k2=2):
     if len(np.unique(y)) != 1:
         model = leafType
         model.fit(X, y)
@@ -256,7 +256,7 @@ class treeNode(object):
 
         for featIndex in featIndexes:
             featVal = np.unique(dataMat[:, featIndex])
-            for splitVal in np.random.choice(featVal, 0.5*len(featVal), replace=False):
+            for splitVal in np.random.choice(featVal, 0.6*len(featVal), replace=False):
                 leftMat, rightMat = self.binSplitData(dataMat, featIndex, splitVal)
                 if (leftMat.shape[0] < min_samples_split) or \
                     (rightMat.shape[0] < min_samples_split): 
@@ -814,7 +814,7 @@ class RF_QLSVM_clf(object):
         RF_R_radius = RF_R_Mat[:,:,1]   # (m,n)
 
         # get the number of cluster
-        avg_num_R = int( RF_R_Mat.shape[0] /len(trees))  # total R divided by number trees
+        avg_num_R = int( RF_R_Mat.shape[0])  # total R divided by number trees
         # get the connectivity graph of R_list
         connect_graph = kneighbors_graph(RF_R_centers, n_neighbors=int(0.7*len(trees)), include_self=False)
         # connect_graph shape = (m,m) , if neibor then value=1, else=0
