@@ -105,8 +105,8 @@ X = data['data'] ; Y = data['target']
 
 
 data = scipy.io.loadmat('yeast.mat')
-X_train = data['X1'] ; y_train = data['Ytrain'] ; y_train = y_train[:,16]
-X_test = data['Xt']; y_test = data['Ytest']; y_test = y_test[:,16]
+X_train = data['X1'] ; y_train = data['Ytrain'] ; y_train = y_train[:,6]
+X_test = data['Xt']; y_test = data['Ytest']; y_test = y_test[:,6]
 X = np.r_[X_train, X_test]; Y = np.r_[y_train, y_test]
 
 X1 ,X2 = get_boundary(X_train, y_train,n_neighbors=6,radius=1)
@@ -162,7 +162,7 @@ num_R = {}
 # training randomforest
 print 'start training randomforest\n'
 start = time()
-myFore = my_RF_QLSVM.RF_QLSVM_clf(n_trees=10, 
+myFore = my_RF_QLSVM2.RF_QLSVM_clf(n_trees=10, 
                     leafType='LogicReg', errType='lseErr_regul',
                     max_depth=None, min_samples_split=5,
                     max_features='log2',bootstrap_data=True)
