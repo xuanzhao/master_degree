@@ -60,7 +60,7 @@ def lseErr(X, y, leafType):
         return 0.0
 
 
-def lseErr_regul(X, y, leafType, k1=0,k2=2):
+def lseErr_regul(X, y, leafType, k1=.5,k2=1):
     if len(np.unique(y)) != 1:
         model = leafType
         model.fit(X, y)

@@ -9,8 +9,7 @@ from sklearn.cross_validation import train_test_split
 
 from sklearn import svm
 from __future__ import division
-import my_RF_QLSVM1
-import my_QLSVM_RF
+import my_RF_QLSVM
 import get_Quasi_linear_Kernel
 from sklearn.learning_curve import learning_curve
 from sklearn.learning_curve import validation_curve
@@ -87,23 +86,6 @@ def get_boundary(X, y,n_neighbors=8,radius=0.5):
     return data_bound, data_nonBound
 
 # ========================== import real data ===========================
-data = scipy.io.loadmat('breastdata.mat')
-X = data['X']; Y = data['Y']
-
-# data = scipy.io.loadmat('sonar.mat')
-# X = data['X']; Y = data['Y']
-data = fetch_mldata('glass')
-X = data['data'] ; Y = data['target']
-Y  = np.where(Y==3, 1, 0)
-from sklearn.preprocessing import StandardScaler
-X = StandardScaler().fit_transform(X)
-X_train, X_test, y_train, y_test = train_test_split(X, Y,
-											test_size=0.33, random_state=13)
-
-data = fetch_mldata('Pima')
-X = data['data'] ; Y = data['target']
-
-
 data = scipy.io.loadmat('yeast.mat')
 X_train = data['X1'] ; y_train = data['Ytrain'] ; y_train = y_train[:,6]
 X_test = data['Xt']; y_test = data['Ytest']; y_test = y_test[:,6]
