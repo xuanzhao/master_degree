@@ -2,14 +2,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.io
 from sklearn import metrics
-from sklearn.preprocessing import Normalizer
+from sklearn.preprocessing import StandardScaler,Normalizer
 
 from sklearn import cross_validation
 from sklearn.cross_validation import train_test_split
 
 from sklearn import svm
 from __future__ import division
-import my_RF_QLSVM
+import my_RF_QLSVM1
+import my_RF_QLSVM2
 import get_Quasi_linear_Kernel
 from sklearn.learning_curve import learning_curve
 from sklearn.learning_curve import validation_curve
@@ -26,28 +27,30 @@ from time import time
 from operator import itemgetter
 import scipy as sp
 
+# RBF_SVM_param_dist= {'kernel': ['rbf'],
+# 					'gamma': sp.stats.expon(scale=.1),
+# 					'C': sp.stats.expon(scale=1000)}
+
+# Linear_SVM_param_dist = {'kernel': ['linear'], 
+# 						 'C': sp.stats.expon(scale=1000)}
+
+# QL_SVM_param_dist= {'kernel': ['precomputed'],
+# 					'C': sp.stats.expon(scale=1000)}
+
+
 RBF_SVM_param_dist= {'kernel': ['rbf'],
-					'gamma': sp.stats.expon(scale=.1),
-					'C': sp.stats.expon(scale=1000)}
-                    # 'C': [0.01, 0.05, 0.1, 0.5, 1, 10, 20, 30, 40, 50, 
-                    # 	  70, 90, 100, 150, 200, 250, 300, 350, 400, 450,
-                    # 	  500, 550, 600, 700, 800, 900, 1000]}
+					'gamma': [0.1, 0.5, 1, 5],
+          'C': [0.1, 0.5, 1, 5, 10, 20, 50]}
 
 # Linear_SVM_param_dist = {'kernel': ['linear'], 
 # 						 'C': [0.01, 0.1, 1, 10, 100, 200, 400, 500, 1000]}
 Linear_SVM_param_dist = {'kernel': ['linear'], 
-						 'C': sp.stats.expon(scale=1000)}
-					# 'C': [0.01, 0.03, 0.05, 0.1, 0.5, 1, 10, 20, 30, 40, 50, 
-     #                 	  70, 90, 100, 150, 200, 250, 300, 350, 400, 450,
-     #                 	  500, 550, 600, 650, 700, 750, 800, 850,
-     #                 	  900, 950, 1000]}
+						 # 'C': sp.stats.expon(scale=1000)}
+					'C': [0.1, 0.5, 1, 5, 10, 20, 50]}
 
 QL_SVM_param_dist= {'kernel': ['precomputed'],
-					# 'gamma': sp.stats.expon(scale=.1),
-					'C': sp.stats.expon(scale=1000)}
-                    # 'C': [0.01, 0.05, 0.1, 0.5, 1, 10, 20, 30, 40, 50, 
-                    # 	  70, 90, 100, 150, 200, 250, 300, 350, 400, 450,
-                    # 	  500, 550, 600, 700, 800, 900, 1000]}
+          'gamma': [0.1, 0.5, 1, 5],
+          'C': [0.1, 0.5, 1, 5, 10, 20, 50]}
 
 # Utility function to report best scores
 def report(grid_scores, n_top=5):
@@ -96,46 +99,169 @@ X_train = X1[:,:-1] ; y_train = X1[:,-1]; y_train = np.array(map(int,y_train))
 #X = data['X']; Y = data['Y']
 #Y = Y[:,2]
 
+# ========================== Normalize data ===========================
+
+X_train, X_test, y_train, y_test = train_test_split(X, Y,
+                      test_size=0.50, random_state=None)
+
 # Standard normalization
-from sklearn.preprocessing import StandardScaler
-stder = StandardScaler()
-X_train = stder.fit_transform(X_train)
-X_test = stder.transform(X_test)
+X_train = StandardScaler().fit_transform(X_train)
+X_test = StandardScaler().fit_transform(X_test)
+
 # L2 normalization
 X_train = Normalizer(norm='l2').fit_transform(X_train)
 X_test = Normalizer(norm='l2').fit_transform(X_test)
 X_train = X_train / np.tile(np.sqrt(np.sum(X_train*X_train,axis=1)),(436,1)).transpose()
 X_test = X_test / np.tile(np.sqrt(np.sum(X_test*X_test,axis=1)),(436,1)).transpose()
-#================= experiment RBF and linear SVM without CV======================
-# run randomized search
-skf = cross_validation.StratifiedKFold(y_train, n_folds=3, shuffle=True,random_state=13)
-n_iter_search = 200
-random_search = RandomizedSearchCV(svm.SVC(), 
-					param_distributions=Linear_SVM_param_dist,
-                                   n_iter=n_iter_search, n_jobs=4, 
-                                   cv=skf, scoring='f1')
-start = time()
-random_search.fit(X_train, y_train)
-print("RBF_linear kernel SVM RandomSearch took %.2f seconds for %d candidates"
-  " parameter settings." % ((time() - start), n_iter_search))
-print("Random_search Best estimator is :\n"), random_search.best_estimator_
-report(random_search.grid_scores_,n_top=5)
 
-C = random_search.best_params_['C']
-#gamma = random_search.best_params_['gamma']
-kernel = random_search.best_params_['kernel']
 
-#clf = svm.SVC(kernel=kernel, C=C, gamma=gamma)
-clf = svm.SVC(kernel=kernel, C=C)
-clf.fit(X_train, y_train)
-y_pred = clf.predict(X_test)
+#================= experiment RBF and linear SVM with 3-CV======================
+accuracy_score = []; precision_score = []; recall_score = []; f1_score = []
+for i in range(0,50):
+    X_train, X_test, y_train, y_test = train_test_split(X, Y,
+                          test_size=0.50, random_state=None)
+    # L2 normalization
+    X_train = Normalizer(norm='l2').fit_transform(X_train)
+    X_test = Normalizer(norm='l2').fit_transform(X_test)
+    skf = cross_validation.StratifiedKFold(y_train, n_folds=3, shuffle=True,random_state=13)
+    grid_search = GridSearchCV(svm.SVC(decision_function_shape='ovr'), 
+              param_grid=Linear_SVM_param_dist, 
+                                       n_jobs=4, 
+                                       cv=skf, scoring='accuracy', refit=True)
+    start = time()
+    grid_search.fit(X_train, y_train)
+    print("RBF_linear kernel SVM RandomSearch took %.2f seconds"
+      " parameter settings." % ((time() - start)))
+    print("grid_search Best estimator is :\n"), grid_search.best_estimator_
+    report(grid_search.grid_scores_,n_top=5)
 
-print '====================== Final validation score ======================\n'
-#print 'confusion_matrix :\n', metrics.confusion_matrix(y_test, y_pred)
-print 'precision_score :', metrics.precision_score(y_test, y_pred)
-print 'recall_score :', metrics.recall_score(y_test, y_pred)
-print 'f1_score :', metrics.f1_score(y_test, y_pred)
-print '*'*200
+    y_pred = grid_search.predict(X_test)
+
+    accuracy_score.append(metrics.accuracy_score(y_test, y_pred, normalize=True))
+    precision_score.append(metrics.precision_score(y_test, y_pred,average='binary'))
+    recall_score.append(metrics.recall_score(y_test, y_pred,average='binary'))
+    f1_score.append(metrics.f1_score(y_test, y_pred,average='binary'))
+
+print '====================== Final Test score ======================\n'
+print("Mean validation accuracy_score: %0.4f (std: %0.4f)" % 
+   (np.mean(accuracy_score), np.std(accuracy_score)))
+print("Mean validation precision_score: %0.4f (std: %0.4f)" % 
+   (np.mean(precision_score), np.std(precision_score)))
+print("Mean validation recall_score: %0.4f (std: %0.4f)" % 
+   (np.mean(recall_score), np.std(recall_score)))
+print("Mean validation f1_score: %0.4f (std: %0.4f)" % 
+   (np.mean(f1_score), np.std(f1_score)))
+
+
+#================= experiment Quasi-linear SVM without CV =================
+RF_accuracy_score = []; RF_precision_score = []; RF_recall_score = []; RF_f1_score = []
+SVM_accuracy_score = []; SVM_precision_score = []; SVM_recall_score = []; SVM_f1_score = []
+
+for i in range(0, 2):
+    X_train, X_test, y_train, y_test = train_test_split(X, Y,
+                          test_size=0.50, random_state=None)
+    # L2 normalization
+    X_train = Normalizer(norm='l2').fit_transform(X_train)
+    X_test = Normalizer(norm='l2').fit_transform(X_test)
+    # training randomforest
+    print 'start training randomforest\n'
+    start = time()
+    myFore = my_RF_QLSVM2.RF_QLSVM_clf(n_trees=10, 
+                        leafType='linear_SVC', errType='lseErr_regul',
+                        max_depth=None, min_samples_split=10,
+                        max_features='log2',bootstrap_data=True)
+    myFore.fit(X_train, y_train)
+    end = time() - start
+    print 'done training randomforest, ues time %f hours\n' % (end/60/60)
+
+    y_pred = myFore.RF_predict(X_test)
+    accuracy = metrics.accuracy_score(y_test, y_pred, normalize=True)
+    precision = metrics.precision_score(y_test, y_pred,average='binary')
+    recall = metrics.recall_score(y_test, y_pred,average='binary')
+    f1 = metrics.f1_score(y_test, y_pred,average='binary')
+    print '*'*100, 'current randomforest test result :', '*'*100,'\n'
+    print 'accuracy_score :', accuracy
+    print 'precision_score :', precision
+    print 'recall_score :', recall
+    print 'f1_score :', f1 
+    print '*'*200,'\n'
+
+    RF_accuracy_score.append(accuracy)
+    RF_precision_score.append(precision)
+    RF_recall_score.append(recall)
+    RF_f1_score.append(f1)
+
+    # num_R = {}
+    accuracy_score = []; precision_score =[]; recall_score =[]; f1_score = []
+    for i, ratio in enumerate(np.arange(.07,0.3,0.04)):
+        RMat = np.array(myFore.get_RF_avgRList_byAggloCluster(ratio))
+        RBFinfo = partial(get_Quasi_linear_Kernel.get_RBFinfo,RMat=RMat, lamb=1)
+        Quasi_linear_kernel = partial(get_Quasi_linear_Kernel.get_KernelMatrix,RMat=RMat)
+
+        # training QL_SVM
+        K_train = Quasi_linear_kernel(X_train,X_train)
+        K_test = Quasi_linear_kernel(X_test,X_train)
+
+        # run randomized search
+        skf = cross_validation.StratifiedKFold(y_train, n_folds=3, shuffle=True,random_state=13)
+        grid_search = GridSearchCV(svm.SVC(decision_function_shape='ovr'), 
+                  param_grid=QL_SVM_param_dist, 
+                                           n_jobs=4, 
+                                           cv=skf, scoring='accuracy', refit=True)
+        start = time()
+        grid_search.fit(K_train, y_train)
+        # print("QL_linear kernel SVM RandomSearch took %.2f seconds"
+        #   " parameter settings." % ((time() - start)))
+        # print("grid_search Best estimator is :\n"), grid_search.best_estimator_
+        # report(grid_search.grid_scores_,n_top=5)
+
+        y_pred = grid_search.predict(K_test)
+        accuracy = metrics.accuracy_score(y_test, y_pred, normalize=True)
+        precision = metrics.precision_score(y_test, y_pred,average='binary')
+        recall = metrics.recall_score(y_test, y_pred,average='binary')
+        f1 = metrics.f1_score(y_test, y_pred,average='binary')
+        print '*'*100, 'current QL SVM test result :', '*'*100,'\n'
+        print 'accuracy_score :', accuracy
+        print 'precision_score :', precision
+        print 'recall_score :', recall
+        print 'f1_score :', f1 
+        print '*'*200,'\n'
+        accuracy_score.append(accuracy)
+        precision_score.append(precision)
+        recall_score.append(recall)
+        f1_score.append(f1)
+
+    accuracy = np.max(accuracy_score)
+    precision = np.max(precision_score)
+    recall = np.max(recall_score)
+    f1 = np.max(f1_score)
+    SVM_accuracy_score.append(accuracy)
+    SVM_precision_score.append(precision)
+    SVM_recall_score.append(recall)
+    SVM_f1_score.append(f1)
+        
+        # num_R[i] = np.array([len(RMat), accuracy, precision, recall, f1])
+  
+print '====================== Final Test score ======================\n'
+print("RF Mean test accuracy_score: %0.4f (std: %0.4f)" %
+    (np.mean(RF_accuracy_score), np.std(RF_accuracy_score))) 
+print("RF Mean test precision_score: %0.4f (std: %0.4f)" % 
+   (np.mean(RF_precision_score), np.std(RF_precision_score)))
+print("RF Mean test recall_score: %0.4f (std: %0.4f)" % 
+   (np.mean(RF_recall_score), np.std(RF_recall_score)))
+print("RF Mean test f1_score: %0.4f (std: %0.4f)" % 
+   (np.mean(RF_f1_score), np.std(RF_f1_score)))
+
+print("SVM Mean test accuracy_score: %0.4f (std: %0.4f)" % 
+   (np.mean(SVM_accuracy_score), np.std(SVM_accuracy_score)))
+print("SVM Mean test precision_score: %0.4f (std: %0.4f)" % 
+   (np.mean(SVM_precision_score), np.std(SVM_precision_score)))
+print("SVM Mean test recall_score: %0.4f (std: %0.4f)" % 
+   (np.mean(SVM_recall_score), np.std(SVM_recall_score)))
+print("SVM Mean test f1_score: %0.4f (std: %0.4f)" % 
+   (np.mean(SVM_f1_score), np.std(SVM_f1_score)))
+
+
 
 #================= experiment Quasi-linear SVM without CV =================
 skf = cross_validation.StratifiedKFold(y_train, n_folds=3, shuffle=True,random_state=13)

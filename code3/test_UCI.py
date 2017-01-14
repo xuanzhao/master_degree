@@ -10,7 +10,7 @@ from sklearn.cross_validation import train_test_split
 
 from sklearn import svm
 from __future__ import division
-import my_RF_QLSVM1
+import my_RF_QLSVM2
 import get_Quasi_linear_Kernel
 from sklearn.learning_curve import learning_curve
 from sklearn.learning_curve import validation_curve
@@ -67,7 +67,6 @@ le = preprocessing.LabelEncoder()
 le.fit(['benign','malignant'])
 Y = le.transform(Y)
 Y = Y.ravel()
-Y.shape
 
 data = fetch_mldata('glass')
 X = data['data'] ; Y = data['target']
@@ -100,6 +99,7 @@ X = data.iloc[:,:-1] ; Y = data.iloc[:,-1]
 
 data = fetch_mldata('sonar')
 X = data['data'] ; Y = data['target']
+Y  = np.where(Y==1, 1, 0)
 
 data = pd.read_csv('./data/arrhythmia.txt', delimiter=',', header=None, na_values='?')
 data = data.fillna(data.mean(axis=0),axis=0)
@@ -109,6 +109,7 @@ Y  = np.where(Y==01, 1, 0)
 data = np.loadtxt('./data/haberman.txt', delimiter=',')
 X = data[:,:-1] ; Y = data[:,-1]
 Y = Y.astype(np.int)
+Y  = np.where(Y==1, 1, 0)
 
 # data = fetch_mldata('Pima')
 # X = data['data'] ; Y = data['target']
@@ -179,8 +180,8 @@ for i in range(0, 2):
     # training randomforest
     print 'start training randomforest\n'
     start = time()
-    myFore = my_RF_QLSVM1.RF_QLSVM_clf(n_trees=10, 
-                        leafType='LogicReg', errType='lseErr_regul',
+    myFore = my_RF_QLSVM2.RF_QLSVM_clf(n_trees=10, 
+                        leafType='linear_SVC', errType='lseErr_regul',
                         max_depth=None, min_samples_split=10,
                         max_features='log2',bootstrap_data=True)
     myFore.fit(X_train, y_train)

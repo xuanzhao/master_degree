@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pylab as plt
 from time import time
 from sklearn import linear_model
+from sklearn import svm
 from sklearn.kernel_ridge import KernelRidge
 from sklearn.isotonic import IsotonicRegression
 from sklearn import metrics
@@ -27,12 +28,17 @@ BayesReg = linear_model.BayesianRidge(n_iter=300,alpha_1=1.e-6,alpha_2=1.e-6,
 IsotonicReg = IsotonicRegression(y_min=None, y_max=None, increasing=True,
                                  out_of_bounds='nan')
 
+linear_SVC = svm.SVC(C=1.0, kernel='linear', decision_function_shape='ovr')
 
 def createCLF(model):
+    model_str = str(model)
     paras = model.get_params()
-    C = paras['C']
-    penalty = paras['penalty']
-    return linear_model.LogisticRegression(C=C, penalty=penalty)
+    if 'SVC' in model_str:
+        return svm.SVC(C=paras['C'], kernel='linear', decision_function_shape='ovr')
+    if 'Logistic' in model_str:
+        C = paras['C']
+        penalty = paras['penalty']
+        return linear_model.LogisticRegression(C=C, penalty=penalty)
 
 
 def lseErr(X, y, leafType):
@@ -49,8 +55,9 @@ def lseErr(X, y, leafType):
             model.__getattribute__('predict')
             #print 'now use predict method, leaf model is \n',model
             yHat = model.predict(X)
-        yHat = yHat[:,1]
+            yHat = np.stack((np.zeros_like(yHat), yHat), axis=1)
 
+        yHat = yHat[:,1]
         error = np.sum(np.power(y - yHat, 2)) / len(yHat)
 
         #yHat = model.predict_log_proba(X)
@@ -73,7 +80,8 @@ def lseErr_regul(X, y, leafType, k1=.5,k2=1):
             model.__getattribute__('predict')
             # print 'now use predict method, leaf model is \n',model
             yHat = model.predict(X)
-
+            yHat = np.stack((np.zeros_like(yHat), yHat), axis=1)
+        
         yHat = yHat[:,1] # get predict is 1
         #neg_ratio = np.true_divide(np.sum(y==0), len(y))
         X1_mean = np.mean(X[y==1], axis=0)
@@ -272,7 +280,7 @@ class treeNode(object):
                 newError = error_mse + error_reg
                 if error_mse < .01:
                     Error_mes, Error_reg = errType(dataMat[:,:-1],dataMat[:,-1], leafType)
-                    if Error_mes < 0.01:
+                    if Error_mes < 0.05:
                         print 'Error_mes is', Error_mes
                         print 'current subDataSet is approxmiately linear separable, do not split'
                         clf = createCLF(leafType)
