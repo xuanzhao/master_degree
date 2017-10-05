@@ -13,7 +13,7 @@ def get_RBFinfo(X, RMat, lamb=1):
 			Rj = np.mat(RMat[j]).reshape((2,n))
 			diff_row = X[i,:] - Rj[0] 	# (1,n) - (1,n) = (1,n)
 			diff_dot = diff_row * diff_row.T 	# (1,n) * (n,1) = (1,1)
-			R[i,j] = np.exp( - diff_dot / lamb * Rj[1]*Rj[1].T)
+			R[i,j] = np.exp( - diff_dot / (lamb * Rj[1]*Rj[1].T))
 												# (1,1) * (1,n)*(n,1) = (1,1)
 	# standardize R
 	R_std = np.true_divide(R, np.sum(R,axis=1))

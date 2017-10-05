@@ -184,7 +184,8 @@ def bagForFeatures(max_features, n_features):
 # RList = []
 LEAFTYPE = {'SGDClf': SGDClf, 'LogicReg': LogicReg, 'RidgeReg': RidgeReg, 
             'RANSACReg': RANSACReg, 'BayesReg': BayesReg,
-            'IsotonicReg': IsotonicReg, 'KernelRidge':KernelRidge
+            'IsotonicReg': IsotonicReg, 'KernelRidge':KernelRidge, 
+            'linear_SVC': linear_SVC
             }
 ERRTYPE = {'lseErr': lseErr, 'lseErr_regul': lseErr_regul}
 
