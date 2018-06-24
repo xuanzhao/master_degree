@@ -1,0 +1,31 @@
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {2.1}{\ignorespaces Illustration of a hyperplane and maximum margin for a SVM\relax }}{9}{figure.caption.7}
+\contentsline {figure}{\numberline {2.2}{\ignorespaces Visual kernel mapping\relax }}{11}{figure.caption.8}
+\contentsline {figure}{\numberline {2.3}{\ignorespaces A comparison of linear SVM and nonlinear SVM on synthetic datasets.\relax }}{11}{figure.caption.9}
+\contentsline {figure}{\numberline {2.4}{\ignorespaces Multiple local linear classifiers with interpolation for nonlinear separation hyperplane.\relax }}{15}{figure.caption.10}
+\contentsline {figure}{\numberline {2.5}{\ignorespaces Quasi-linear kernel function adjust the number of local linear classifiers.\relax }}{18}{figure.caption.11}
+\contentsline {figure}{\numberline {2.6}{\ignorespaces Different type of basis threshold functions.\relax }}{19}{figure.caption.12}
+\contentsline {subfigure}{\numberline {(a)}{\ignorespaces {A nonlinear separation data set}}}{19}{figure.caption.12}
+\contentsline {subfigure}{\numberline {(b)}{\ignorespaces {An illustration of KPCA feature transformation}}}{19}{figure.caption.12}
+\contentsline {figure}{\numberline {2.7}{\ignorespaces Modified k-means method on an artificial data set.\relax }}{20}{figure.caption.13}
+\contentsline {figure}{\numberline {2.8}{\ignorespaces Proximity plot for a 10-class handwritten digit classification task.\relax }}{20}{figure.caption.14}
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {3.1}{\ignorespaces The framework of the proposed method .\relax }}{25}{figure.caption.15}
+\contentsline {figure}{\numberline {3.2}{\ignorespaces The extract condition of linear information in leaf nodes .\relax }}{25}{figure.caption.16}
+\contentsline {figure}{\numberline {3.3}{\ignorespaces The extract linear information at leaf nodes which are linear classifiers.\relax }}{25}{figure.caption.16}
+\contentsline {figure}{\numberline {3.4}{\ignorespaces The final quasi-linear SVM trained by random forest. \relax }}{26}{figure.caption.17}
+\contentsline {figure}{\numberline {3.5}{\ignorespaces The final quasi-linear SVM trained by random forest compare with random forest predict result.\relax }}{27}{figure.caption.18}
+\contentsline {figure}{\numberline {3.6}{\ignorespaces Flow diagram of training process\relax }}{28}{figure.caption.19}
+\contentsline {figure}{\numberline {3.7}{\ignorespaces Flow diagram of testing process\relax }}{28}{figure.caption.20}
+\contentsline {figure}{\numberline {3.8}{\ignorespaces The relationship in entropy, Gini index and classification error rate\relax }}{32}{figure.caption.22}
+\contentsline {figure}{\numberline {3.9}{\ignorespaces evaluate the importance of features by random forest.\relax }}{33}{figure.caption.23}
+\contentsline {figure}{\numberline {3.10}{\ignorespaces Binary classification task.\relax }}{34}{figure.caption.24}
+\contentsline {figure}{\numberline {3.11}{\ignorespaces Decision tree learned from Figure\nobreakspace {}\ref {fig:5:set}.\relax }}{34}{figure.caption.24}
+\contentsline {figure}{\numberline {3.12}{\ignorespaces Binary partitions of $L_t$ on the ordered variable $X_j$. Setting the decision threshold $v$ to any value in $[v_k,v_{k+1}]$.\relax }}{37}{figure.caption.26}
+\contentsline {figure}{\numberline {3.13}{\ignorespaces A comparison of classification boundaries of a several classifiers on synthetic datasets.\relax }}{42}{figure.caption.27}
+\contentsline {figure}{\numberline {3.14}{\ignorespaces Show characteristics of different clustering algorithms. \relax }}{44}{figure.caption.28}
+\contentsline {figure}{\numberline {3.15}{\ignorespaces Proposed method handle with non-linear data set\relax }}{44}{figure.caption.29}
+\contentsline {figure}{\numberline {3.16}{\ignorespaces Proposed method choose variable number of local linear classifiers after training random forest.\relax }}{45}{figure.caption.30}
+\addvspace {10\p@ }
+\addvspace {10\p@ }
